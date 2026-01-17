@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "./pages/Landing";
+import DonorOnboarding from "./pages/DonorOnboarding";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import PublicRequests from "./pages/PublicRequests";
@@ -47,7 +48,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<DonorOnboarding />} />
+          <Route path="/landing" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/requests" element={<PublicRequests />} />
           
