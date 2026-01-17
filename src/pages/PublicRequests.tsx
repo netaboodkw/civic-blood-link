@@ -1,11 +1,21 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight, MapPin, Droplets, Clock, AlertCircle, Heart } from "lucide-react";
+import { ChevronRight, MapPin, Droplets, Clock, AlertCircle, Heart, Filter, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 interface BloodRequest {
   id: string;
@@ -19,20 +29,44 @@ interface BloodRequest {
   created_at: string;
 }
 
+const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const CITIES = ["مدينة الكويت", "حولي", "الفروانية", "الأحمدي", "الجهراء", "مبارك الكبير"];
+const URGENCY_LEVELS = [
+  { value: "normal", label: "عادي" },
+  { value: "high", label: "مستعجل" },
+  { value: "urgent", label: "طارئ" },
+];
+
 export default function PublicRequests() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  
+  const [bloodTypeFilter, setBloodTypeFilter] = useState<string>("all");
+  const [cityFilter, setCityFilter] = useState<string>("all");
+  const [urgencyFilter, setUrgencyFilter] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState(false);
 
   const { data: requests, isLoading, error } = useQuery({
-    queryKey: ["public-requests"],
+    queryKey: ["public-requests", bloodTypeFilter, cityFilter, urgencyFilter],
     queryFn: async (): Promise<BloodRequest[]> => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("blood_requests")
         .select("id, blood_type, city, hospital_name, units_needed, urgency_level, patient_name, file_number, created_at")
         .eq("status", "open")
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(50);
 
+      if (bloodTypeFilter !== "all") {
+        query = query.eq("blood_type", bloodTypeFilter as "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-");
+      }
+      if (cityFilter !== "all") {
+        query = query.eq("city", cityFilter);
+      }
+      if (urgencyFilter !== "all") {
+        query = query.eq("urgency_level", urgencyFilter);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -68,6 +102,16 @@ export default function PublicRequests() {
     }
   };
 
+  const hasActiveFilters = bloodTypeFilter !== "all" || cityFilter !== "all" || urgencyFilter !== "all";
+  
+  const clearFilters = () => {
+    setBloodTypeFilter("all");
+    setCityFilter("all");
+    setUrgencyFilter("all");
+  };
+
+  const activeFiltersCount = [bloodTypeFilter, cityFilter, urgencyFilter].filter(f => f !== "all").length;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -88,6 +132,119 @@ export default function PublicRequests() {
 
       <main className="pb-8 pt-4">
         <div className="max-w-lg mx-auto px-4">
+          {/* Filter Toggle Button */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(
+              "w-full flex items-center justify-between",
+              "bg-card rounded-xl p-4 shadow-card mb-4",
+              "transition-all duration-200 ios-spring ios-press"
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <Filter className="w-5 h-5 text-primary" />
+              <span className="font-medium text-foreground">فلترة الطلبات</span>
+              {activeFiltersCount > 0 && (
+                <Badge className="bg-primary text-primary-foreground text-xs">
+                  {activeFiltersCount}
+                </Badge>
+              )}
+            </div>
+            <ChevronRight className={cn(
+              "w-5 h-5 text-muted-foreground transition-transform",
+              showFilters && "-rotate-90"
+            )} />
+          </button>
+
+          {/* Filters Panel */}
+          {showFilters && (
+            <div className="bg-card rounded-xl p-4 shadow-card mb-4 space-y-4 animate-slide-up">
+              {/* Blood Type Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">فصيلة الدم</label>
+                <Select value={bloodTypeFilter} onValueChange={setBloodTypeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="جميع الفصائل" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">جميع الفصائل</SelectItem>
+                    {BLOOD_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* City Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">المحافظة</label>
+                <Select value={cityFilter} onValueChange={setCityFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="جميع المحافظات" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">جميع المحافظات</SelectItem>
+                    {CITIES.map((city) => (
+                      <SelectItem key={city} value={city}>{city}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Urgency Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">مستوى الاستعجال</label>
+                <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="جميع المستويات" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">جميع المستويات</SelectItem>
+                    {URGENCY_LEVELS.map((level) => (
+                      <SelectItem key={level.value} value={level.value}>{level.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Clear Filters */}
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={clearFilters}
+                >
+                  <X className="w-4 h-4" />
+                  مسح الفلاتر
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Active Filters Tags */}
+          {hasActiveFilters && !showFilters && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {bloodTypeFilter !== "all" && (
+                <Badge variant="secondary" className="gap-1">
+                  {bloodTypeFilter}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setBloodTypeFilter("all")} />
+                </Badge>
+              )}
+              {cityFilter !== "all" && (
+                <Badge variant="secondary" className="gap-1">
+                  {cityFilter}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setCityFilter("all")} />
+                </Badge>
+              )}
+              {urgencyFilter !== "all" && (
+                <Badge variant="secondary" className="gap-1">
+                  {URGENCY_LEVELS.find(l => l.value === urgencyFilter)?.label}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setUrgencyFilter("all")} />
+                </Badge>
+              )}
+            </div>
+          )}
+
           {/* Info banner */}
           <div className="bg-primary-soft rounded-xl p-4 mb-6 animate-slide-up">
             <div className="flex items-start gap-3">
@@ -102,6 +259,13 @@ export default function PublicRequests() {
               </div>
             </div>
           </div>
+
+          {/* Results count */}
+          {!isLoading && requests && (
+            <p className="text-sm text-muted-foreground mb-4">
+              {requests.length} طلب {hasActiveFilters ? "مطابق" : "متاح"}
+            </p>
+          )}
 
           {/* Requests list */}
           {isLoading ? (
@@ -183,7 +347,18 @@ export default function PublicRequests() {
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Droplets className="w-12 h-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">لا توجد طلبات حاليًا</p>
+              <p className="text-muted-foreground">
+                {hasActiveFilters ? "لا توجد طلبات مطابقة للفلاتر" : "لا توجد طلبات حاليًا"}
+              </p>
+              {hasActiveFilters && (
+                <Button
+                  variant="link"
+                  className="mt-2"
+                  onClick={clearFilters}
+                >
+                  مسح الفلاتر
+                </Button>
+              )}
             </div>
           )}
 
