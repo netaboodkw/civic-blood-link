@@ -1,12 +1,22 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MobileLayout } from "@/components/layout/MobileLayout";
-import { Heart } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { TabType } from "@/components/layout/BottomTabBar";
+import { useProfile } from "@/hooks/useProfile";
+import { useDonationLogs } from "@/hooks/useDonationLogs";
+import { EligibilityCard } from "@/components/home/EligibilityCard";
+import { DonationHistoryCard } from "@/components/donate/DonationHistoryCard";
+import { NewDonationDialog } from "@/components/donate/NewDonationDialog";
+import { Button } from "@/components/ui/button";
 
 export default function Donate() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>("donate");
+  const [showNewDonation, setShowNewDonation] = useState(false);
+
+  const { data: profile, isLoading: profileLoading } = useProfile();
+  const { data: donations = [], isLoading: donationsLoading } = useDonationLogs();
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
@@ -25,23 +35,47 @@ export default function Donate() {
     }
   };
 
+  const handleUpdateStatus = () => {
+    setShowNewDonation(true);
+  };
+
   return (
     <MobileLayout
       title="تبرع"
       activeTab={activeTab}
       onTabChange={handleTabChange}
     >
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="w-16 h-16 bg-primary-soft rounded-2xl flex items-center justify-center mb-4">
-          <Heart className="w-8 h-8 text-primary" />
-        </div>
-        <h2 className="text-lg font-semibold text-foreground mb-2">
-          قريبًا
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          سيتم إضافة خيارات التبرع قريبًا
-        </p>
+      <div className="space-y-4 pb-4">
+        {/* Eligibility Status */}
+        <EligibilityCard
+          isEligible={profile?.isEligible ?? true}
+          daysRemaining={profile?.daysRemaining ?? null}
+          onUpdateStatus={handleUpdateStatus}
+          isLoading={profileLoading}
+        />
+
+        {/* New Donation Button */}
+        <Button
+          onClick={() => setShowNewDonation(true)}
+          className="w-full gap-2"
+          size="lg"
+        >
+          <Plus className="w-5 h-5" />
+          تسجيل تبرع جديد
+        </Button>
+
+        {/* Donation History */}
+        <DonationHistoryCard
+          donations={donations}
+          isLoading={donationsLoading}
+        />
       </div>
+
+      {/* New Donation Dialog */}
+      <NewDonationDialog
+        open={showNewDonation}
+        onOpenChange={setShowNewDonation}
+      />
     </MobileLayout>
   );
 }
