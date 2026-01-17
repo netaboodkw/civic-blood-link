@@ -14,6 +14,8 @@ interface BloodRequest {
   hospital_name: string;
   units_needed: number;
   urgency_level: string;
+  patient_name: string | null;
+  file_number: string | null;
   created_at: string;
 }
 
@@ -26,7 +28,7 @@ export default function PublicRequests() {
     queryFn: async (): Promise<BloodRequest[]> => {
       const { data, error } = await supabase
         .from("blood_requests")
-        .select("id, blood_type, city, hospital_name, units_needed, urgency_level, created_at")
+        .select("id, blood_type, city, hospital_name, units_needed, urgency_level, patient_name, file_number, created_at")
         .eq("status", "open")
         .order("created_at", { ascending: false })
         .limit(20);
