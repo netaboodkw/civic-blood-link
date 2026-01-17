@@ -18,10 +18,10 @@ export default function Profile() {
     setActiveTab(tab);
     switch (tab) {
       case "home":
-        navigate("/");
+        navigate("/home");
         break;
       case "requests":
-        navigate("/requests");
+        navigate("/my-requests");
         break;
       case "donate":
         navigate("/donate");

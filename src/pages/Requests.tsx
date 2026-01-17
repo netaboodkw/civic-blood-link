@@ -12,7 +12,7 @@ export default function Requests() {
     setActiveTab(tab);
     switch (tab) {
       case "home":
-        navigate("/");
+        navigate("/home");
         break;
       case "requests":
         break;

@@ -28,10 +28,10 @@ export default function Home() {
     // Navigate to appropriate routes
     switch (tab) {
       case "home":
-        navigate("/");
+        navigate("/home");
         break;
       case "requests":
-        navigate("/requests");
+        navigate("/my-requests");
         break;
       case "donate":
         navigate("/donate");
