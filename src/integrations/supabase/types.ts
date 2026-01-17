@@ -20,9 +20,11 @@ export type Database = {
           city: string
           created_at: string
           expires_at: string | null
+          file_number: string | null
           hospital_name: string
           id: string
           notes: string | null
+          patient_name: string | null
           requester_id: string
           status: Database["public"]["Enums"]["request_status"]
           units_needed: number
@@ -34,9 +36,11 @@ export type Database = {
           city: string
           created_at?: string
           expires_at?: string | null
+          file_number?: string | null
           hospital_name: string
           id?: string
           notes?: string | null
+          patient_name?: string | null
           requester_id: string
           status?: Database["public"]["Enums"]["request_status"]
           units_needed?: number
@@ -48,9 +52,11 @@ export type Database = {
           city?: string
           created_at?: string
           expires_at?: string | null
+          file_number?: string | null
           hospital_name?: string
           id?: string
           notes?: string | null
+          patient_name?: string | null
           requester_id?: string
           status?: Database["public"]["Enums"]["request_status"]
           units_needed?: number
