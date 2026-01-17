@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Heart, MapPin, Bell, Users, Shield, Clock, ChevronLeft, Droplets } from "lucide-react";
+import { Heart, MapPin, Bell, Users, Shield, Clock, ChevronLeft, Droplets, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -48,6 +48,14 @@ export default function Landing() {
     navigate("/requests");
   };
 
+  const handleCreateRequest = () => {
+    if (isAuthenticated) {
+      navigate("/create-request");
+    } else {
+      navigate("/auth?redirect=create-request");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       {/* Hero Section */}
@@ -92,6 +100,21 @@ export default function Landing() {
             >
               <span>{isAuthenticated ? "الذهاب للرئيسية" : "ابدأ الآن"}</span>
               <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={handleCreateRequest}
+              className={cn(
+                "w-full flex items-center justify-center gap-2",
+                "bg-destructive text-destructive-foreground",
+                "rounded-xl px-6 py-4",
+                "font-semibold text-base",
+                "shadow-card hover:shadow-elevated",
+                "transition-all duration-200 ios-spring ios-press"
+              )}
+            >
+              <Plus className="w-5 h-5" />
+              <span>أحتاج متبرع دم</span>
             </button>
 
             <button
