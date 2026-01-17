@@ -28,6 +28,7 @@ const HOSPITALS = [
   "مستشفى السلام الدولي",
   "مستشفى المواساة",
   "مستشفى الهادي",
+  "أخرى",
 ] as const;
 
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] as const;
@@ -63,22 +64,26 @@ export default function CreateRequest() {
   const [fileNumber, setFileNumber] = useState("");
   const [bloodType, setBloodType] = useState<string>("");
   const [hospital, setHospital] = useState("");
+  const [customHospital, setCustomHospital] = useState("");
   const [city, setCity] = useState<string>("مدينة الكويت");
   const [unitsNeeded, setUnitsNeeded] = useState(1);
   const [urgencyLevel, setUrgencyLevel] = useState<"normal" | "high" | "urgent">("normal");
   const [notes, setNotes] = useState("");
-  const [errors, setErrors] = useState<Partial<Record<keyof RequestFormData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof RequestFormData | "customHospital", string>>>({});
 
   const createRequestMutation = useMutation({
     mutationFn: async (data: RequestFormData) => {
       if (!user) throw new Error("يجب تسجيل الدخول");
+
+      // Use custom hospital name if "أخرى" is selected
+      const finalHospital = data.hospital === "أخرى" ? customHospital : data.hospital;
 
       const { error } = await supabase.from("blood_requests").insert({
         requester_id: user.id,
         patient_name: data.patientName,
         file_number: data.fileNumber || null,
         blood_type: data.bloodType,
-        hospital_name: data.hospital,
+        hospital_name: finalHospital,
         city: data.city,
         units_needed: data.unitsNeeded,
         urgency_level: data.urgencyLevel,
@@ -101,6 +106,8 @@ export default function CreateRequest() {
   });
 
   const validateForm = (): boolean => {
+    const newErrors: Partial<Record<keyof RequestFormData | "customHospital", string>> = {};
+    
     try {
       requestSchema.parse({
         patientName,
@@ -112,19 +119,28 @@ export default function CreateRequest() {
         urgencyLevel,
         notes: notes || undefined,
       });
-      setErrors({});
-      return true;
     } catch (err) {
       if (err instanceof z.ZodError) {
-        const newErrors: Partial<Record<keyof RequestFormData, string>> = {};
         err.errors.forEach((e) => {
           const field = e.path[0] as keyof RequestFormData;
           newErrors[field] = e.message;
         });
-        setErrors(newErrors);
       }
-      return false;
     }
+
+    // Validate custom hospital if "أخرى" is selected
+    if (hospital === "أخرى") {
+      if (!customHospital.trim()) {
+        newErrors.customHospital = "يرجى كتابة اسم المستشفى";
+      } else if (customHospital.trim().length < 3) {
+        newErrors.customHospital = "اسم المستشفى قصير جدًا";
+      } else if (customHospital.trim().length > 100) {
+        newErrors.customHospital = "اسم المستشفى طويل جدًا";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -250,7 +266,12 @@ export default function CreateRequest() {
               <div className="relative">
                 <select
                   value={hospital}
-                  onChange={(e) => setHospital(e.target.value)}
+                  onChange={(e) => {
+                    setHospital(e.target.value);
+                    if (e.target.value !== "أخرى") {
+                      setCustomHospital("");
+                    }
+                  }}
                   className={cn(
                     "w-full bg-card border rounded-xl py-3.5 px-4 text-foreground appearance-none",
                     "focus:outline-none focus:ring-2 focus:ring-primary/50",
@@ -266,6 +287,26 @@ export default function CreateRequest() {
               </div>
               {errors.hospital && (
                 <p className="text-xs text-destructive mt-1">{errors.hospital}</p>
+              )}
+
+              {/* Custom hospital input */}
+              {hospital === "أخرى" && (
+                <div className="mt-3">
+                  <input
+                    type="text"
+                    value={customHospital}
+                    onChange={(e) => setCustomHospital(e.target.value)}
+                    placeholder="اكتب اسم المستشفى"
+                    className={cn(
+                      "w-full bg-card border rounded-xl py-3.5 px-4 text-foreground",
+                      "placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50",
+                      errors.customHospital ? "border-destructive" : "border-input"
+                    )}
+                  />
+                  {errors.customHospital && (
+                    <p className="text-xs text-destructive mt-1">{errors.customHospital}</p>
+                  )}
+                </div>
               )}
             </div>
 
