@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Droplet, Heart, Users, ArrowLeft } from "lucide-react";
+import { Droplet, Heart, Users, ArrowLeft, Bell, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -11,6 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -24,6 +33,58 @@ const cities = [
   "مبارك الكبير",
 ];
 
+const termsAndConditions = `
+الشروط والأحكام - تطبيق بنك الدم
+
+1. مقدمة
+مرحباً بك في تطبيق بنك الدم. باستخدامك لهذا التطبيق، فإنك توافق على الالتزام بهذه الشروط والأحكام.
+
+2. الأهلية للتبرع
+- يجب أن يكون عمرك 18 عاماً أو أكثر
+- يجب أن تكون بصحة جيدة وقت التبرع
+- يجب أن يكون وزنك 50 كجم على الأقل
+- يجب أن تمر 3 أشهر على الأقل بين كل تبرع
+
+3. المعلومات الشخصية
+- تتعهد بتقديم معلومات صحيحة ودقيقة
+- أنت مسؤول عن تحديث بياناتك بشكل منتظم
+- نحتفظ بحق حذف الحسابات التي تحتوي على معلومات مضللة
+
+4. الخصوصية
+- نحترم خصوصيتك ونحمي بياناتك الشخصية
+- لن نشارك معلوماتك مع أطراف ثالثة دون موافقتك
+- نستخدم بياناتك فقط لأغراض التطبيق
+
+5. استخدام التطبيق
+- يُمنع استخدام التطبيق لأغراض غير مشروعة
+- يُمنع إنشاء طلبات وهمية أو احتيالية
+- يُمنع التحرش أو الإزعاج للمستخدمين الآخرين
+
+6. الإشعارات
+- قد نرسل لك إشعارات حول طلبات الدم في منطقتك
+- يمكنك تعطيل الإشعارات من إعدادات التطبيق
+- الإشعارات تهدف لإنقاذ الأرواح
+
+7. المسؤولية
+- التطبيق منصة وسيطة فقط
+- لا نتحمل مسؤولية أي ضرر ناتج عن التبرع
+- يجب استشارة الطبيب قبل التبرع
+
+8. التعديلات
+- نحتفظ بحق تعديل هذه الشروط في أي وقت
+- سنخطرك بأي تغييرات جوهرية
+- استمرارك في استخدام التطبيق يعني موافقتك على التعديلات
+
+9. إنهاء الحساب
+- يمكنك حذف حسابك في أي وقت
+- نحتفظ بحق إيقاف حسابك في حالة مخالفة الشروط
+
+10. التواصل
+للاستفسارات أو الشكاوى، يرجى التواصل معنا عبر التطبيق.
+
+آخر تحديث: يناير 2026
+`;
+
 export default function DonorOnboarding() {
   const navigate = useNavigate();
   const { signUp, isLoading } = useAuth();
@@ -33,12 +94,20 @@ export default function DonorOnboarding() {
   const [password, setPassword] = useState("");
   const [bloodType, setBloodType] = useState("");
   const [city, setCity] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptNotifications, setAcceptNotifications] = useState(false);
+  const [termsDialogOpen, setTermsDialogOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!fullName || !email || !password || !bloodType || !city) {
       toast.error("يرجى ملء جميع الحقول");
+      return;
+    }
+
+    if (!acceptTerms) {
+      toast.error("يجب الموافقة على الشروط والأحكام");
       return;
     }
 
@@ -163,10 +232,77 @@ export default function DonorOnboarding() {
             </div>
           </div>
 
+          {/* Terms and Conditions */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-start gap-3 bg-white p-3 rounded-lg border">
+              <Checkbox
+                id="terms"
+                checked={acceptTerms}
+                onCheckedChange={(checked) => setAcceptTerms(checked === true)}
+                className="mt-0.5"
+              />
+              <div className="flex-1">
+                <label htmlFor="terms" className="text-sm cursor-pointer">
+                  أوافق على{" "}
+                  <Dialog open={termsDialogOpen} onOpenChange={setTermsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <button
+                        type="button"
+                        className="text-red-600 font-medium underline hover:text-red-700"
+                      >
+                        الشروط والأحكام
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-lg max-h-[80vh]" dir="rtl">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <FileText className="h-5 w-5" />
+                          الشروط والأحكام
+                        </DialogTitle>
+                      </DialogHeader>
+                      <ScrollArea className="h-[60vh] pr-4">
+                        <div className="whitespace-pre-wrap text-sm text-muted-foreground leading-relaxed">
+                          {termsAndConditions}
+                        </div>
+                      </ScrollArea>
+                      <Button
+                        onClick={() => {
+                          setAcceptTerms(true);
+                          setTermsDialogOpen(false);
+                        }}
+                        className="w-full bg-red-600 hover:bg-red-700"
+                      >
+                        أوافق على الشروط والأحكام
+                      </Button>
+                    </DialogContent>
+                  </Dialog>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 bg-white p-3 rounded-lg border">
+              <Checkbox
+                id="notifications"
+                checked={acceptNotifications}
+                onCheckedChange={(checked) => setAcceptNotifications(checked === true)}
+                className="mt-0.5"
+              />
+              <div className="flex-1">
+                <label htmlFor="notifications" className="text-sm cursor-pointer flex items-center gap-2">
+                  <Bell className="h-4 w-4 text-muted-foreground" />
+                  أوافق على استلام الإشعارات عند وجود طلبات دم في منطقتي
+                </label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  سنرسل لك إشعارات فقط عند الحاجة الملحة
+                </p>
+              </div>
+            </div>
+          </div>
+
           <Button
             type="submit"
             className="w-full bg-red-600 hover:bg-red-700 text-white h-12 text-lg"
-            disabled={isLoading}
+            disabled={isLoading || !acceptTerms}
           >
             {isLoading ? "جاري التسجيل..." : "سجّل كمتبرع"}
           </Button>
