@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Droplet, Heart, Users, ArrowLeft, Bell, FileText } from "lucide-react";
+import { Droplet, Heart, Users, ArrowLeft, Bell, FileText, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -90,6 +90,7 @@ export default function DonorOnboarding() {
   const { signUp, isLoading } = useAuth();
   
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [bloodType, setBloodType] = useState("");
@@ -101,8 +102,13 @@ export default function DonorOnboarding() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!fullName || !email || !password || !bloodType || !city) {
+    if (!fullName || !phone || !email || !password || !bloodType || !city) {
       toast.error("يرجى ملء جميع الحقول");
+      return;
+    }
+
+    if (!/^[0-9]{8}$/.test(phone)) {
+      toast.error("يرجى إدخال رقم هاتف صحيح (8 أرقام)");
       return;
     }
 
@@ -117,6 +123,7 @@ export default function DonorOnboarding() {
         blood_type: bloodType,
         city: city,
         role: "donor",
+        phone: phone,
       });
       toast.success("تم التسجيل بنجاح!");
       navigate("/home");
@@ -160,7 +167,7 @@ export default function DonorOnboarding() {
       </div>
 
       {/* Form */}
-      <div className="flex-1 px-6">
+      <div className="flex-1 px-6 overflow-y-auto">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="fullName">الاسم الكامل</Label>
@@ -171,6 +178,25 @@ export default function DonorOnboarding() {
               onChange={(e) => setFullName(e.target.value)}
               className="bg-white"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">رقم الهاتف</Label>
+            <div className="relative">
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="12345678"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                className="bg-white pl-16"
+                dir="ltr"
+              />
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-muted-foreground">
+                <Phone className="h-4 w-4" />
+                <span className="text-sm">+965</span>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">
