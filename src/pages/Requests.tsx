@@ -3,14 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { ClipboardList, Plus } from "lucide-react";
 import type { TabType } from "@/components/layout/BottomTabBar";
-import { useMyRequests } from "@/hooks/useMyRequests";
+import { useMyRequests, type BloodRequest } from "@/hooks/useMyRequests";
 import { RequestCard } from "@/components/requests/RequestCard";
+import { EditRequestDialog } from "@/components/requests/EditRequestDialog";
+import { CancelRequestDialog } from "@/components/requests/CancelRequestDialog";
 import { Button } from "@/components/ui/button";
 
 export default function Requests() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>("requests");
   const { data: requests = [], isLoading } = useMyRequests();
+  
+  const [editingRequest, setEditingRequest] = useState<BloodRequest | null>(null);
+  const [cancellingRequestId, setCancellingRequestId] = useState<string | null>(null);
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
@@ -27,6 +32,14 @@ export default function Requests() {
         navigate("/profile");
         break;
     }
+  };
+
+  const handleEdit = (request: BloodRequest) => {
+    setEditingRequest(request);
+  };
+
+  const handleCancel = (requestId: string) => {
+    setCancellingRequestId(requestId);
   };
 
   return (
@@ -76,11 +89,30 @@ export default function Requests() {
         ) : (
           <div className="space-y-3">
             {requests.map((request) => (
-              <RequestCard key={request.id} request={request} />
+              <RequestCard
+                key={request.id}
+                request={request}
+                onEdit={handleEdit}
+                onCancel={handleCancel}
+              />
             ))}
           </div>
         )}
       </div>
+
+      {/* Edit Dialog */}
+      <EditRequestDialog
+        request={editingRequest}
+        open={!!editingRequest}
+        onOpenChange={(open) => !open && setEditingRequest(null)}
+      />
+
+      {/* Cancel Dialog */}
+      <CancelRequestDialog
+        requestId={cancellingRequestId}
+        open={!!cancellingRequestId}
+        onOpenChange={(open) => !open && setCancellingRequestId(null)}
+      />
     </MobileLayout>
   );
 }

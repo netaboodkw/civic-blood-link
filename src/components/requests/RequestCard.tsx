@@ -1,5 +1,6 @@
-import { Droplet, MapPin, Building2, Clock, User, FileText } from "lucide-react";
+import { Droplet, MapPin, Building2, Clock, User, FileText, Pencil, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -7,6 +8,8 @@ import type { BloodRequest } from "@/hooks/useMyRequests";
 
 interface RequestCardProps {
   request: BloodRequest;
+  onEdit?: (request: BloodRequest) => void;
+  onCancel?: (requestId: string) => void;
 }
 
 const urgencyColors: Record<string, string> = {
@@ -35,7 +38,9 @@ const statusLabels: Record<string, string> = {
   expired: "منتهي",
 };
 
-export function RequestCard({ request }: RequestCardProps) {
+export function RequestCard({ request, onEdit, onCancel }: RequestCardProps) {
+  const canModify = request.status === "open";
+
   return (
     <div className="bg-card rounded-xl shadow-card p-4 space-y-3">
       {/* Header */}
@@ -96,6 +101,34 @@ export function RequestCard({ request }: RequestCardProps) {
         <p className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-2">
           {request.notes}
         </p>
+      )}
+
+      {/* Actions */}
+      {canModify && (onEdit || onCancel) && (
+        <div className="flex gap-2 pt-2 border-t border-border">
+          {onEdit && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 gap-2"
+              onClick={() => onEdit(request)}
+            >
+              <Pencil className="w-4 h-4" />
+              تعديل
+            </Button>
+          )}
+          {onCancel && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => onCancel(request.id)}
+            >
+              <X className="w-4 h-4" />
+              إلغاء
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );
