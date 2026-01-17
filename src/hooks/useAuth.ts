@@ -44,6 +44,7 @@ export function useAuth() {
       blood_type?: string; 
       city?: string; 
       role?: string;
+      phone?: string;
     }
   ) => {
     const { data, error } = await supabase.auth.signUp({
