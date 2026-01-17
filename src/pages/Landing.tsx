@@ -27,9 +27,9 @@ const features = [
 ];
 
 const stats = [
-  { value: "١٠٠٠+", label: "متبرع مسجل" },
-  { value: "٥٠٠+", label: "طلب تم تلبيته" },
-  { value: "٨", label: "مدن مغطاة" },
+  { value: "٥٠٠+", label: "متبرع في الكويت" },
+  { value: "٢٠٠+", label: "طلب تم تلبيته" },
+  { value: "٦", label: "محافظات مغطاة" },
 ];
 
 export default function Landing() {

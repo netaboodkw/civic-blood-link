@@ -8,7 +8,7 @@ import { toast } from "sonner";
 type AuthMode = "login" | "signup";
 
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] as const;
-const CITIES = ["الرياض", "جدة", "مكة", "المدينة", "الدمام", "الخبر", "الطائف", "بريدة"] as const;
+const CITIES = ["مدينة الكويت", "حولي", "الفروانية", "الجهراء", "الأحمدي", "مبارك الكبير"] as const;
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [bloodType, setBloodType] = useState<string>("O+");
-  const [city, setCity] = useState<string>("الرياض");
+  const [city, setCity] = useState<string>("مدينة الكويت");
   const [role, setRole] = useState<"donor" | "requester" | "both">("donor");
 
   const handleSubmit = async (e: React.FormEvent) => {
