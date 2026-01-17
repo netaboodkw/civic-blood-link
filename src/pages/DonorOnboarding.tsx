@@ -93,6 +93,7 @@ export default function DonorOnboarding() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [bloodType, setBloodType] = useState("");
   const [city, setCity] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -102,13 +103,23 @@ export default function DonorOnboarding() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!fullName || !phone || !email || !password || !bloodType || !city) {
+    if (!fullName || !phone || !email || !password || !confirmPassword || !bloodType || !city) {
       toast.error("يرجى ملء جميع الحقول");
       return;
     }
 
     if (!/^[0-9]{8}$/.test(phone)) {
       toast.error("يرجى إدخال رقم هاتف صحيح (8 أرقام)");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error("كلمتا المرور غير متطابقتين");
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
       return;
     }
 
@@ -217,9 +228,21 @@ export default function DonorOnboarding() {
             <Input
               id="password"
               type="password"
-              placeholder="أدخل كلمة المرور"
+              placeholder="أدخل كلمة المرور (6 أحرف على الأقل)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="bg-white"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">تأكيد كلمة المرور</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="أعد إدخال كلمة المرور"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               className="bg-white"
             />
           </div>
