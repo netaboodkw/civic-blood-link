@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAppSettings } from "./useAppSettings";
 
 export interface Profile {
   id: string;
@@ -16,9 +17,10 @@ export interface Profile {
 interface ProfileWithEligibility extends Profile {
   isEligible: boolean;
   daysRemaining: number | null;
+  eligibilityDays: number;
 }
 
-function calculateEligibility(lastDonationDate: string | null): { isEligible: boolean; daysRemaining: number | null } {
+function calculateEligibility(lastDonationDate: string | null, eligibilityDays: number): { isEligible: boolean; daysRemaining: number | null } {
   if (!lastDonationDate) {
     return { isEligible: true, daysRemaining: null };
   }
@@ -27,15 +29,18 @@ function calculateEligibility(lastDonationDate: string | null): { isEligible: bo
   const now = new Date();
   const daysSinceDonation = Math.floor((now.getTime() - lastDonation.getTime()) / (1000 * 60 * 60 * 24));
   
-  const isEligible = daysSinceDonation >= 90;
-  const daysRemaining = isEligible ? null : Math.max(0, 90 - daysSinceDonation);
+  const isEligible = daysSinceDonation >= eligibilityDays;
+  const daysRemaining = isEligible ? null : Math.max(0, eligibilityDays - daysSinceDonation);
 
   return { isEligible, daysRemaining };
 }
 
 export function useProfile() {
+  const { data: settings } = useAppSettings();
+  const eligibilityDays = settings?.donation_eligibility_days || 60;
+
   return useQuery({
-    queryKey: ["profile"],
+    queryKey: ["profile", eligibilityDays],
     queryFn: async (): Promise<ProfileWithEligibility | null> => {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -58,12 +63,13 @@ export function useProfile() {
         return null;
       }
 
-      const { isEligible, daysRemaining } = calculateEligibility(data.last_donation_date);
+      const { isEligible, daysRemaining } = calculateEligibility(data.last_donation_date, eligibilityDays);
 
       return {
         ...data,
         isEligible,
         daysRemaining,
+        eligibilityDays,
       } as ProfileWithEligibility;
     },
   });

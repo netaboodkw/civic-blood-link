@@ -444,10 +444,6 @@ export default function PublicRequests() {
                           <MapPin className="w-3 h-3" />
                           {request.city}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Droplets className="w-3 h-3" />
-                          {request.units_needed} وحدة
-                        </span>
                       </div>
 
                       <div className="flex items-center gap-1 mt-2 text-[10px] text-muted-foreground">

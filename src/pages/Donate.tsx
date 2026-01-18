@@ -57,7 +57,7 @@ export default function Donate() {
             <div>
               <h3 className="font-semibold text-foreground mb-1">ما هو سجل التبرعات؟</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                سجّل هنا إذا تبرعت بالدم خلال هذه الفترة. النظام سيحسب تلقائياً موعد أهليتك القادمة (بعد 90 يوم من آخر تبرع).
+                سجّل هنا إذا تبرعت بالدم خلال هذه الفترة. النظام سيحسب تلقائياً موعد أهليتك القادمة (بعد {profile?.eligibilityDays || 60} يوم من آخر تبرع).
               </p>
             </div>
           </div>
@@ -210,7 +210,7 @@ export default function Donate() {
           className="glass rounded-xl p-4 text-center"
         >
           <p className="text-xs text-muted-foreground">
-            ⏰ فترة الأمان الطبية بين كل تبرع هي <span className="font-bold text-foreground">90 يوم</span> للحفاظ على صحتك
+            ⏰ فترة الأمان الطبية بين كل تبرع هي <span className="font-bold text-foreground">{profile?.eligibilityDays || 60} يوم</span> للحفاظ على صحتك
           </p>
         </motion.div>
       </div>

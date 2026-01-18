@@ -76,9 +76,6 @@ export function RequestDetailsDialog({
               <span className="text-3xl font-bold text-foreground">
                 {request.blood_type}
               </span>
-              <p className="text-lg text-muted-foreground">
-                {request.units_needed} وحدة مطلوبة
-              </p>
             </div>
             <div className="flex gap-2">
               <Badge className={cn("text-sm px-3 py-1", statusColors[request.status])}>

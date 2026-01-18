@@ -53,7 +53,7 @@ export function EditRequestDialog({ request, open, onOpenChange }: EditRequestDi
   const [hospital, setHospital] = useState(request?.hospital_name || "");
   const [customHospital, setCustomHospital] = useState("");
   const [city, setCity] = useState(request?.city || "");
-  const [unitsNeeded, setUnitsNeeded] = useState(request?.units_needed?.toString() || "1");
+  // Removed units_needed - no longer used
   const [urgencyLevel, setUrgencyLevel] = useState(request?.urgency_level || "normal");
   const [notes, setNotes] = useState(request?.notes || "");
 
@@ -67,7 +67,7 @@ export function EditRequestDialog({ request, open, onOpenChange }: EditRequestDi
       setHospital(HOSPITALS.includes(request.hospital_name) ? request.hospital_name : "أخرى");
       setCustomHospital(HOSPITALS.includes(request.hospital_name) ? "" : request.hospital_name);
       setCity(request.city || "");
-      setUnitsNeeded(request.units_needed?.toString() || "1");
+      // Removed units_needed - no longer used
       setUrgencyLevel(request.urgency_level || "normal");
       setNotes(request.notes || "");
     }
@@ -105,7 +105,6 @@ export function EditRequestDialog({ request, open, onOpenChange }: EditRequestDi
         file_number: fileNumber.trim() || undefined,
         hospital_name: finalHospital,
         city,
-        units_needed: parseInt(unitsNeeded),
         urgency_level: urgencyLevel,
         notes: notes.trim() || undefined,
       });
@@ -192,19 +191,6 @@ export function EditRequestDialog({ request, open, onOpenChange }: EditRequestDi
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label>عدد الوحدات</Label>
-            <Select value={unitsNeeded} onValueChange={setUnitsNeeded}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                  <SelectItem key={n} value={n.toString()}>{n} وحدة</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className="space-y-2">
             <Label>مستوى الاستعجال</Label>

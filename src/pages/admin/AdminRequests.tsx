@@ -122,12 +122,16 @@ export default function AdminRequests() {
                   </div>
                   <div className="flex items-center gap-2 mt-2">
                     <span className="text-xs text-muted-foreground">
-                      {request.units_needed} وحدات مطلوبة
-                    </span>
-                    <span className="text-xs text-muted-foreground">•</span>
-                    <span className="text-xs text-muted-foreground">
                       {format(new Date(request.created_at), "dd MMM yyyy", { locale: ar })}
                     </span>
+                    {request.file_number && (
+                      <>
+                        <span className="text-xs text-muted-foreground">•</span>
+                        <span className="text-xs text-muted-foreground">
+                          ملف: {request.file_number}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
 
