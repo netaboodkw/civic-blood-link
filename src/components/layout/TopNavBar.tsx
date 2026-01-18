@@ -19,7 +19,7 @@ export function TopNavBar({
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 glass border-b border-border/50",
+        "flex-shrink-0 z-40 glass border-b border-border/50",
         className
       )}
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
