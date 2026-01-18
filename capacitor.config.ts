@@ -10,12 +10,24 @@ const config: CapacitorConfig = {
     allowNavigation: ['*.lovable.app', '*.supabase.co']
   },
   ios: {
-    contentInset: 'automatic'
+    contentInset: 'automatic',
+    backgroundColor: '#ffffff',
+    scrollEnabled: true,
+    allowsLinkPreview: false,
+    limitsNavigationsToAppBoundDomains: true
   },
   plugins: {
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
+    StatusBar: {
+      style: 'Dark',
+      backgroundColor: '#ffffff'
+    },
+    Keyboard: {
+      resize: 'body',
+      resizeOnFullScreen: true
+    }
   },
 };
 
