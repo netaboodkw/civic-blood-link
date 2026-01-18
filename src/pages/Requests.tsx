@@ -316,8 +316,7 @@ export default function Requests() {
                           {request.city}
                         </div>
                         <span>•</span>
-                        <span>{request.units_needed} وحدات</span>
-                        <span>•</span>
+                        <span>{format(new Date(request.created_at), "dd MMM", { locale: ar })}</span>
                         <span>{format(new Date(request.created_at), "dd MMM", { locale: ar })}</span>
                       </div>
                     </div>
