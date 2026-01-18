@@ -548,9 +548,6 @@ export default function PublicRequests() {
                   <span className="text-3xl font-bold text-foreground">
                     {selectedRequest.blood_type}
                   </span>
-                  <p className="text-lg text-muted-foreground">
-                    {selectedRequest.units_needed} وحدة مطلوبة
-                  </p>
                 </div>
                 <Badge className={cn("text-sm px-3 py-1", urgencyColors[selectedRequest.urgency_level || "normal"])}>
                   {urgencyLabels[selectedRequest.urgency_level || "normal"]}

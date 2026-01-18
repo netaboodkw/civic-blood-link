@@ -117,10 +117,12 @@ export default function Landing() {
                   transition={{ type: "spring", stiffness: 200, damping: 15 }}
                   className="rounded-[2rem] overflow-visible"
                 >
-                  <img 
+                  <motion.img 
                     src={settings.app_logo_url} 
                     alt="نبضة دم" 
                     className="w-auto h-32 object-contain"
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
                   />
                 </motion.div>
               ) : (

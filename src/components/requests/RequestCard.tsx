@@ -53,9 +53,6 @@ export function RequestCard({ request, onEdit, onCancel }: RequestCardProps) {
             <span className="text-xl font-bold text-foreground">
               {request.blood_type}
             </span>
-            <p className="text-sm text-muted-foreground">
-              {request.units_needed} وحدة
-            </p>
           </div>
         </div>
         <div className="flex flex-col items-end gap-1">
