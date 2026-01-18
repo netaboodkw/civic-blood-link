@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAppSettings } from "@/hooks/useAppSettings";
-import { Heart, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
+import localLogo from "@/assets/logo.png";
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -9,25 +9,15 @@ interface SplashScreenProps {
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   const [isVisible, setIsVisible] = useState(true);
-  const [logoLoaded, setLogoLoaded] = useState(false);
-  const [logoError, setLogoError] = useState(false);
-  const { data: settings, isLoading } = useAppSettings();
-  const logoUrl = settings?.app_logo_url;
 
   useEffect(() => {
-    // Wait for settings to load, then start timer
-    if (!isLoading) {
-      const timer = setTimeout(() => {
-        setIsVisible(false);
-        setTimeout(onComplete, 500);
-      }, 2500);
+    const timer = setTimeout(() => {
+      setIsVisible(false);
+      setTimeout(onComplete, 500);
+    }, 2500);
 
-      return () => clearTimeout(timer);
-    }
-  }, [onComplete, isLoading]);
-
-  const showCustomLogo = logoUrl && logoLoaded && !logoError;
-  const isLoadingLogo = isLoading || (logoUrl && !logoLoaded && !logoError);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
 
   return (
     <AnimatePresence>
@@ -46,18 +36,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             className="absolute w-96 h-96 bg-gradient-to-br from-primary to-accent rounded-full blur-3xl"
           />
 
-          <div className="flex flex-col items-center gap-8 relative z-10">
-            {/* Hidden preload image */}
-            {logoUrl && (
-              <img 
-                src={logoUrl} 
-                alt="" 
-                className="hidden"
-                onLoad={() => setLogoLoaded(true)}
-                onError={() => setLogoError(true)}
-              />
-            )}
-
+          <div className="flex flex-col items-center gap-6 relative z-10">
             {/* Animated Logo */}
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
@@ -65,28 +44,9 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
               transition={{ type: "spring", stiffness: 150, damping: 12, delay: 0.2 }}
               className="relative"
             >
-              {isLoadingLogo ? (
-                <motion.div className="w-36 h-36 rounded-[2.5rem] bg-gradient-to-br from-primary/20 via-primary/10 to-accent/20 flex items-center justify-center shadow-2xl ring-4 ring-primary/20">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                    className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
-                  />
-                </motion.div>
-              ) : showCustomLogo ? (
-                <motion.div className="w-36 h-36 rounded-[2.5rem] overflow-hidden shadow-2xl ring-4 ring-primary/20 bg-white flex items-center justify-center">
-                  <img src={logoUrl} alt="نبضة دم" className="w-full h-full object-contain p-2" />
-                </motion.div>
-              ) : (
-                <motion.div className="w-36 h-36 rounded-[2.5rem] bg-gradient-to-br from-primary via-primary to-accent flex items-center justify-center shadow-2xl ring-4 ring-primary/20">
-                  <motion.div
-                    animate={{ scale: [1, 1.15, 1] }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    <Heart className="w-20 h-20 text-white drop-shadow-lg" fill="currentColor" />
-                  </motion.div>
-                </motion.div>
-              )}
+              <motion.div className="w-40 h-40 rounded-[2.5rem] overflow-hidden shadow-2xl ring-4 ring-primary/20 bg-white flex items-center justify-center">
+                <img src={localLogo} alt="نبضة دم" className="w-full h-full object-contain p-3" />
+              </motion.div>
               
               {/* Pulse rings */}
               <motion.div
@@ -110,27 +70,15 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
               </motion.div>
             </motion.div>
 
-            {/* App Name */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
+            {/* Tagline */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, type: "spring" }}
-              className="text-center"
+              transition={{ delay: 0.8 }}
+              className="text-muted-foreground text-lg"
             >
-              <h1 className="text-4xl font-extrabold mb-2">
-                <span className="bg-gradient-to-l from-primary via-primary to-accent bg-clip-text text-transparent">
-                  نبضة دم
-                </span>
-              </h1>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-                className="text-muted-foreground"
-              >
-                كل نقطة دم تصنع الفرق
-              </motion.p>
-            </motion.div>
+              كل نقطة دم تصنع الفرق
+            </motion.p>
 
             {/* Loading dots */}
             <motion.div
