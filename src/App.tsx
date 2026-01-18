@@ -14,6 +14,7 @@ import Donate from "./pages/Donate";
 import Profile from "./pages/Profile";
 import CreateRequest from "./pages/CreateRequest";
 import NotFound from "./pages/NotFound";
+import Terms from "./pages/Terms";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminRequests from "./pages/admin/AdminRequests";
@@ -52,6 +53,7 @@ const App = () => (
           <Route path="/landing" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/requests" element={<PublicRequests />} />
+          <Route path="/terms" element={<Terms />} />
           
           {/* Protected routes */}
           <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
