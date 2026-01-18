@@ -27,7 +27,8 @@ export default function Auth() {
   const initialMode = searchParams.get("mode") === "login" ? "login" : "signup";
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState(0);
+  // Start directly at step 1 (form) for signup, skip welcome screen
+  const [step, setStep] = useState(initialMode === "signup" ? 1 : 0);
   const [emailExists, setEmailExists] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
 
@@ -45,7 +46,8 @@ export default function Auth() {
     const urlMode = searchParams.get("mode");
     if (urlMode === "login" || urlMode === "signup") {
       setMode(urlMode);
-      setStep(0);
+      // Start at step 1 for signup (skip welcome), step 0 for login
+      setStep(urlMode === "signup" ? 1 : 0);
     }
   }, [searchParams]);
 
