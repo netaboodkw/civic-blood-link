@@ -9,17 +9,24 @@ interface SplashScreenProps {
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   const [isVisible, setIsVisible] = useState(true);
-  const { data: settings } = useAppSettings();
+  const [logoLoaded, setLogoLoaded] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+  const { data: settings, isLoading } = useAppSettings();
   const logoUrl = settings?.app_logo_url;
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(false);
-      setTimeout(onComplete, 500);
-    }, 2500);
+    // Wait for settings to load, then start timer
+    if (!isLoading) {
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        setTimeout(onComplete, 500);
+      }, 2500);
 
-    return () => clearTimeout(timer);
-  }, [onComplete]);
+      return () => clearTimeout(timer);
+    }
+  }, [onComplete, isLoading]);
+
+  const showCustomLogo = logoUrl && logoLoaded && !logoError;
 
   return (
     <AnimatePresence>
@@ -39,6 +46,17 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           />
 
           <div className="flex flex-col items-center gap-8 relative z-10">
+            {/* Hidden preload image */}
+            {logoUrl && (
+              <img 
+                src={logoUrl} 
+                alt="" 
+                className="hidden"
+                onLoad={() => setLogoLoaded(true)}
+                onError={() => setLogoError(true)}
+              />
+            )}
+
             {/* Animated Logo */}
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
@@ -46,9 +64,9 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
               transition={{ type: "spring", stiffness: 150, damping: 12, delay: 0.2 }}
               className="relative"
             >
-              {logoUrl ? (
-                <motion.div className="w-36 h-36 rounded-[2.5rem] overflow-hidden shadow-2xl ring-4 ring-primary/20 bg-white">
-                  <img src={logoUrl} alt="نبضة دم" className="w-full h-full object-contain" />
+              {showCustomLogo ? (
+                <motion.div className="w-36 h-36 rounded-[2.5rem] overflow-hidden shadow-2xl ring-4 ring-primary/20 bg-white flex items-center justify-center">
+                  <img src={logoUrl} alt="نبضة دم" className="w-full h-full object-contain p-2" />
                 </motion.div>
               ) : (
                 <motion.div className="w-36 h-36 rounded-[2.5rem] bg-gradient-to-br from-primary via-primary to-accent flex items-center justify-center shadow-2xl ring-4 ring-primary/20">
