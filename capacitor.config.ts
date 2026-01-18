@@ -5,9 +5,9 @@ const config: CapacitorConfig = {
   appName: 'نبضة دم',
   webDir: 'dist',
   server: {
-    url: 'https://d1a4b3ac-ab70-4986-9cbf-7e3557c7fe51.lovableproject.com?forceHideBadge=true',
+    url: 'https://civic-blood-link.lovable.app',
     cleartext: true,
-    allowNavigation: ['*.lovableproject.com', '*.lovable.app']
+    allowNavigation: ['*.lovable.app', '*.supabase.co']
   },
   ios: {
     contentInset: 'automatic'
