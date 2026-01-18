@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { SplashScreen } from "@/components/SplashScreen";
 import Landing from "./pages/Landing";
 import Home from "./pages/Home";
@@ -47,6 +48,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
   const [hasSeenSplash, setHasSeenSplash] = useState(false);
+  
+  // Initialize push notifications on native platforms
+  usePushNotifications();
 
   useEffect(() => {
     const seen = sessionStorage.getItem("hasSeenSplash");
