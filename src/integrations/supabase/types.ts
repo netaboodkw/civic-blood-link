@@ -202,6 +202,7 @@ export type Database = {
           id: string
           last_donation_date: string | null
           phone: string | null
+          push_token: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
@@ -213,6 +214,7 @@ export type Database = {
           id: string
           last_donation_date?: string | null
           phone?: string | null
+          push_token?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
@@ -224,6 +226,7 @@ export type Database = {
           id?: string
           last_donation_date?: string | null
           phone?: string | null
+          push_token?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }

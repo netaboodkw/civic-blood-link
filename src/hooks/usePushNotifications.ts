@@ -2,10 +2,35 @@ import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export function usePushNotifications() {
   const [token, setToken] = useState<string | null>(null);
   const [isSupported, setIsSupported] = useState(false);
+
+  // Save push token to user profile
+  const savePushToken = async (pushToken: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('No user logged in, cannot save push token');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ push_token: pushToken } as any)
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error saving push token:', error);
+      } else {
+        console.log('Push token saved successfully');
+      }
+    } catch (error) {
+      console.error('Error saving push token:', error);
+    }
+  };
 
   useEffect(() => {
     const initPushNotifications = async () => {
@@ -29,10 +54,11 @@ export function usePushNotifications() {
       }
 
       // Listen for registration success
-      PushNotifications.addListener('registration', (token) => {
-        console.log('Push registration success, token: ' + token.value);
-        setToken(token.value);
-        // Here you would send this token to your backend to store it
+      PushNotifications.addListener('registration', async (tokenData) => {
+        console.log('Push registration success, token: ' + tokenData.value);
+        setToken(tokenData.value);
+        // Save the token to the database
+        await savePushToken(tokenData.value);
       });
 
       // Listen for registration errors
