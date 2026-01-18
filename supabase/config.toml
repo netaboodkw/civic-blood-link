@@ -1,1 +1,4 @@
 project_id = "kfxttjqblkeudmosavnm"
+
+[functions.send-ios-push]
+verify_jwt = false
