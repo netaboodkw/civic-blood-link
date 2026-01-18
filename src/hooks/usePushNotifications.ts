@@ -1,20 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
+// Store token locally to persist across auth state changes
+const PUSH_TOKEN_KEY = 'nabdat_push_token';
+
 export function usePushNotifications() {
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(() => {
+    // Try to get token from localStorage on init
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(PUSH_TOKEN_KEY);
+    }
+    return null;
+  });
   const [isSupported, setIsSupported] = useState(false);
 
   // Save push token to user profile
-  const savePushToken = async (pushToken: string) => {
+  const savePushToken = useCallback(async (pushToken: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.log('No user logged in, cannot save push token');
-        return;
+        console.log('No user logged in, token saved locally for later');
+        return false;
       }
 
       const { error } = await supabase
@@ -24,14 +33,18 @@ export function usePushNotifications() {
 
       if (error) {
         console.error('Error saving push token:', error);
+        return false;
       } else {
-        console.log('Push token saved successfully');
+        console.log('Push token saved successfully for user:', user.id);
+        return true;
       }
     } catch (error) {
       console.error('Error saving push token:', error);
+      return false;
     }
-  };
+  }, []);
 
+  // Initialize push notifications
   useEffect(() => {
     const initPushNotifications = async () => {
       // Check if running on native platform
@@ -57,7 +70,9 @@ export function usePushNotifications() {
       PushNotifications.addListener('registration', async (tokenData) => {
         console.log('Push registration success, token: ' + tokenData.value);
         setToken(tokenData.value);
-        // Save the token to the database
+        // Save token locally
+        localStorage.setItem(PUSH_TOKEN_KEY, tokenData.value);
+        // Try to save to database
         await savePushToken(tokenData.value);
       });
 
@@ -88,7 +103,25 @@ export function usePushNotifications() {
         PushNotifications.removeAllListeners();
       }
     };
-  }, []);
+  }, [savePushToken]);
 
-  return { token, isSupported };
+  // Listen for auth state changes to save token when user logs in
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // When user signs in, save the push token if we have one
+      if (event === 'SIGNED_IN' && session?.user) {
+        const storedToken = localStorage.getItem(PUSH_TOKEN_KEY);
+        if (storedToken) {
+          console.log('User signed in, saving stored push token...');
+          await savePushToken(storedToken);
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [savePushToken]);
+
+  return { token, isSupported, savePushToken };
 }
