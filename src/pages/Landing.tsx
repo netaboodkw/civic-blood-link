@@ -21,7 +21,7 @@ const features = [
   {
     icon: Clock,
     title: "توفير الوقت",
-    description: "تواصل مباشر بين المتبرع والمحتاج",
+    description: "إشعارات فورية عند وجود طلب مطابق",
     color: "from-green-500 to-emerald-500",
   },
   {
@@ -348,7 +348,7 @@ export default function Landing() {
               {[
                 { step: "١", title: "سجّل حسابك", desc: "أدخل فصيلة دمك ومدينتك", icon: Users },
                 { step: "٢", title: "استقبل التنبيهات", desc: "عند وجود طلب مطابق", icon: Bell },
-                { step: "٣", title: "تبرع وأنقذ حياة", desc: "تواصل مع المحتاج مباشرة", icon: Heart },
+                { step: "٣", title: "تبرع وأنقذ حياة", desc: "توجه لأقرب مركز تبرع", icon: Heart },
               ].map((item, index) => {
                 const Icon = item.icon;
                 return (
