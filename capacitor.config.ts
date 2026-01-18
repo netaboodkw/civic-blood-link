@@ -6,7 +6,11 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     url: 'https://d1a4b3ac-ab70-4986-9cbf-7e3557c7fe51.lovableproject.com?forceHideBadge=true',
-    cleartext: true
+    cleartext: true,
+    allowNavigation: ['*.lovableproject.com', '*.lovable.app']
+  },
+  ios: {
+    contentInset: 'automatic'
   },
   plugins: {
     PushNotifications: {
