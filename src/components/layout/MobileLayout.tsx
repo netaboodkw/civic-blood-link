@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { motion } from "framer-motion";
 import { BottomTabBar, TabType } from "./BottomTabBar";
 import { TopNavBar } from "./TopNavBar";
 
@@ -14,11 +15,17 @@ export function MobileLayout({ title, activeTab, onTabChange, children }: Mobile
     <div className="min-h-screen bg-background">
       <TopNavBar title={title} />
       
-      <main className="pb-24 pt-3">
+      <motion.main 
+        className="pb-24 pt-3"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        key={activeTab}
+      >
         <div className="max-w-lg mx-auto px-4">
           {children}
         </div>
-      </main>
+      </motion.main>
       
       <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} />
     </div>
