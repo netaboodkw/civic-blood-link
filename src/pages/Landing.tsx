@@ -1,40 +1,62 @@
 import { useNavigate } from "react-router-dom";
-import { Heart, MapPin, Bell, Users, Shield, Clock, ChevronLeft, Droplets, Plus } from "lucide-react";
+import { Heart, MapPin, Bell, Users, Shield, Clock, ChevronLeft, Droplets, Plus, Activity, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { motion } from "framer-motion";
 
 const features = [
   {
     icon: MapPin,
     title: "طلبات قريبة",
     description: "اعثر على طلبات الدم في مدينتك فورًا",
+    color: "from-blue-500 to-cyan-500",
   },
   {
     icon: Bell,
     title: "تنبيهات فورية",
     description: "احصل على إشعار عند وجود طلب مطابق لفصيلتك",
+    color: "from-amber-500 to-orange-500",
   },
   {
     icon: Clock,
     title: "توفير الوقت",
     description: "تواصل مباشر بين المتبرع والمحتاج",
+    color: "from-green-500 to-emerald-500",
   },
   {
     icon: Shield,
     title: "آمن وموثوق",
     description: "بياناتك محمية ومشفرة بالكامل",
+    color: "from-purple-500 to-pink-500",
   },
 ];
 
 const stats = [
-  { value: "٥٠٠+", label: "متبرع في الكويت" },
-  { value: "٢٠٠+", label: "طلب تم تلبيته" },
-  { value: "٦", label: "محافظات مغطاة" },
+  { value: "٥٠٠+", label: "متبرع", icon: Users },
+  { value: "٢٠٠+", label: "طلب مكتمل", icon: Heart },
+  { value: "٦", label: "محافظات", icon: MapPin },
 ];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
 
 export default function Landing() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { data: settings } = useAppSettings();
 
   const handleGetStarted = () => {
     if (isAuthenticated) {
@@ -57,191 +79,359 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 overflow-hidden" dir="rtl">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 0.15, scale: 1 }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+          className="absolute top-[-20%] right-[-20%] w-[600px] h-[600px] bg-gradient-to-br from-primary/30 to-accent/20 rounded-full blur-3xl"
+        />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 0.1, scale: 1 }}
+          transition={{ duration: 1.5, delay: 0.3, ease: "easeOut" }}
+          className="absolute bottom-[-10%] left-[-20%] w-[500px] h-[500px] bg-gradient-to-tr from-accent/20 to-primary/30 rounded-full blur-3xl"
+        />
+      </div>
+
       {/* Hero Section */}
       <section className="relative px-4 pt-12 pb-8">
-        {/* Background decoration */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl -z-10" />
-        
-        <div className="max-w-lg mx-auto text-center">
-          {/* Logo */}
-          <div className="flex items-center justify-center mb-6 animate-fade-in">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="max-w-lg mx-auto text-center"
+        >
+          {/* Logo with Pulse Effect */}
+          <motion.div 
+            variants={itemVariants}
+            className="flex items-center justify-center mb-6"
+          >
             <div className="relative">
-              <div className="w-24 h-24 bg-gradient-to-br from-primary to-primary/80 rounded-[2rem] flex items-center justify-center shadow-elevated">
-                <Heart className="w-12 h-12 text-primary-foreground" fill="currentColor" />
-              </div>
-              {/* Pulse effect */}
-              <div className="absolute inset-0 bg-primary/20 rounded-[2rem] animate-ping" style={{ animationDuration: "2s" }} />
+              {settings?.app_logo_url ? (
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                  className="w-28 h-28 rounded-[2.5rem] overflow-hidden shadow-2xl ring-4 ring-primary/20"
+                >
+                  <img 
+                    src={settings.app_logo_url} 
+                    alt="نبضة دم" 
+                    className="w-full h-full object-contain bg-white"
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                  className="relative"
+                >
+                  <div className="w-28 h-28 bg-gradient-to-br from-primary via-primary to-accent rounded-[2.5rem] flex items-center justify-center shadow-2xl ring-4 ring-primary/20">
+                    <Heart className="w-14 h-14 text-primary-foreground drop-shadow-lg" fill="currentColor" />
+                  </div>
+                  {/* Animated Rings */}
+                  <motion.div
+                    animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute inset-0 rounded-[2.5rem] border-2 border-primary/40"
+                  />
+                  <motion.div
+                    animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0, 0.3] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                    className="absolute inset-0 rounded-[2.5rem] border-2 border-primary/30"
+                  />
+                </motion.div>
+              )}
+              {/* Sparkle Effect */}
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                className="absolute -top-2 -right-2"
+              >
+                <Sparkles className="w-6 h-6 text-accent" />
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Title */}
-          <h1 className="text-3xl font-bold text-foreground mb-3 animate-slide-up">
-            نبضة دم
-          </h1>
-          <p className="text-lg text-muted-foreground mb-8 animate-slide-up leading-relaxed" style={{ animationDelay: "50ms" }}>
+          {/* Title with Gradient */}
+          <motion.h1 
+            variants={itemVariants}
+            className="text-4xl font-extrabold mb-3"
+          >
+            <span className="bg-gradient-to-l from-primary via-primary to-accent bg-clip-text text-transparent">
+              نبضة دم
+            </span>
+          </motion.h1>
+
+          <motion.p 
+            variants={itemVariants}
+            className="text-lg text-muted-foreground mb-2 leading-relaxed"
+          >
             منصتك للتبرع بالدم وإنقاذ الأرواح
-            <br />
-            <span className="text-primary font-medium">كل نقطة دم تصنع الفرق</span>
-          </p>
+          </motion.p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col gap-3 mb-10 animate-slide-up" style={{ animationDelay: "100ms" }}>
-            <button
+          <motion.div 
+            variants={itemVariants}
+            className="flex items-center justify-center gap-2 mb-8"
+          >
+            <Activity className="w-5 h-5 text-primary animate-pulse" />
+            <span className="text-primary font-bold text-lg">كل نقطة دم تصنع الفرق</span>
+          </motion.div>
+
+          {/* Stats Cards - Animated */}
+          <motion.div 
+            variants={itemVariants}
+            className="grid grid-cols-3 gap-3 mb-8"
+          >
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.4 + index * 0.1, type: "spring" }}
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  className="glass-card rounded-2xl p-4 text-center cursor-pointer"
+                >
+                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-2">
+                    <Icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="text-2xl font-bold gradient-text mb-1">
+                    {stat.value}
+                  </div>
+                  <div className="text-xs text-muted-foreground font-medium">
+                    {stat.label}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+
+          {/* CTA Buttons - Premium Style */}
+          <motion.div 
+            variants={itemVariants}
+            className="flex flex-col gap-3"
+          >
+            <motion.button
               onClick={handleGetStarted}
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
               className={cn(
-                "w-full flex items-center justify-center gap-2",
-                "bg-primary text-primary-foreground",
-                "rounded-xl px-6 py-4",
-                "font-semibold text-base",
-                "shadow-card hover:shadow-elevated",
-                "transition-all duration-200 ios-spring ios-press"
+                "w-full flex items-center justify-center gap-3",
+                "bg-gradient-to-l from-primary to-primary/90",
+                "text-primary-foreground",
+                "rounded-2xl px-6 py-4",
+                "font-bold text-lg",
+                "shadow-lg shadow-primary/30",
+                "transition-all duration-300"
               )}
             >
               <span>{isAuthenticated ? "الذهاب للرئيسية" : "ابدأ الآن"}</span>
               <ChevronLeft className="w-5 h-5" />
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
               onClick={handleCreateRequest}
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
               className={cn(
-                "w-full flex items-center justify-center gap-2",
-                "bg-destructive text-destructive-foreground",
-                "rounded-xl px-6 py-4",
-                "font-semibold text-base",
-                "shadow-card hover:shadow-elevated",
-                "transition-all duration-200 ios-spring ios-press"
+                "w-full flex items-center justify-center gap-3",
+                "bg-gradient-to-l from-destructive to-destructive/90",
+                "text-destructive-foreground",
+                "rounded-2xl px-6 py-4",
+                "font-bold text-lg",
+                "shadow-lg shadow-destructive/30",
+                "transition-all duration-300"
               )}
             >
               <Plus className="w-5 h-5" />
               <span>أحتاج متبرع دم</span>
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
               onClick={handleViewRequests}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               className={cn(
-                "w-full flex items-center justify-center gap-2",
-                "bg-secondary text-secondary-foreground",
-                "rounded-xl px-6 py-4",
-                "font-medium text-base",
-                "transition-all duration-200 ios-spring ios-press"
+                "w-full flex items-center justify-center gap-3",
+                "glass-card",
+                "text-foreground",
+                "rounded-2xl px-6 py-4",
+                "font-semibold text-base",
+                "transition-all duration-300"
               )}
             >
-              <Droplets className="w-5 h-5" />
+              <Droplets className="w-5 h-5 text-primary" />
               <span>عرض طلبات الدم</span>
-            </button>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 animate-slide-up" style={{ animationDelay: "150ms" }}>
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-2xl font-bold text-primary mb-1">
-                  {stat.value}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+            </motion.button>
+          </motion.div>
+        </motion.div>
       </section>
 
-      {/* Features Section */}
+      {/* Features Section - Cards Grid */}
       <section className="px-4 py-10">
-        <div className="max-w-lg mx-auto">
-          <h2 className="text-xl font-bold text-foreground text-center mb-6 animate-slide-up">
-            لماذا نبضة دم؟
-          </h2>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="max-w-lg mx-auto"
+        >
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-2xl font-bold text-foreground text-center mb-8"
+          >
+            لماذا <span className="gradient-text">نبضة دم</span>؟
+          </motion.h2>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <div
+                <motion.div
                   key={index}
-                  className="bg-card rounded-xl p-4 shadow-card animate-slide-up card-interactive"
-                  style={{ animationDelay: `${200 + index * 50}ms` }}
+                  initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1, type: "spring" }}
+                  whileHover={{ y: -5, scale: 1.02 }}
+                  className="glass-card rounded-2xl p-5 cursor-pointer group"
                 >
-                  <div className="w-10 h-10 bg-primary-soft rounded-xl flex items-center justify-center mb-3">
-                    <Icon className="w-5 h-5 text-primary" />
+                  <div className={cn(
+                    "w-12 h-12 rounded-xl flex items-center justify-center mb-4",
+                    "bg-gradient-to-br", feature.color,
+                    "group-hover:scale-110 transition-transform duration-300"
+                  )}>
+                    <Icon className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm mb-1">
+                  <h3 className="font-bold text-foreground text-base mb-2">
                     {feature.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     {feature.description}
                   </p>
-                </div>
+                </motion.div>
               );
             })}
           </div>
-        </div>
+        </motion.div>
       </section>
 
-      {/* How it works */}
-      <section className="px-4 py-10 bg-card/50">
-        <div className="max-w-lg mx-auto">
-          <h2 className="text-xl font-bold text-foreground text-center mb-6">
-            كيف يعمل؟
-          </h2>
-
-          <div className="space-y-4">
-            {[
-              { step: "١", title: "سجّل حسابك", desc: "أدخل فصيلة دمك ومدينتك" },
-              { step: "٢", title: "استقبل التنبيهات", desc: "عند وجود طلب مطابق" },
-              { step: "٣", title: "تبرع وأنقذ حياة", desc: "تواصل مع المحتاج مباشرة" },
-            ].map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-4 animate-slide-up"
-                style={{ animationDelay: `${400 + index * 100}ms` }}
-              >
-                <div className="w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold text-lg shrink-0">
-                  {item.step}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Bottom CTA */}
-      <section className="px-4 py-10">
-        <div className="max-w-lg mx-auto text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Users className="w-6 h-6 text-primary" />
-            <span className="text-muted-foreground">انضم لمجتمع المتبرعين</span>
-          </div>
-
-          <button
-            onClick={handleGetStarted}
-            className={cn(
-              "w-full flex items-center justify-center gap-2",
-              "bg-primary text-primary-foreground",
-              "rounded-xl px-6 py-4",
-              "font-semibold text-base",
-              "shadow-card hover:shadow-elevated",
-              "transition-all duration-200 ios-spring ios-press"
-            )}
+      {/* How it works - Timeline Style */}
+      <section className="px-4 py-10 bg-gradient-to-b from-card/50 to-transparent">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="max-w-lg mx-auto"
+        >
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-2xl font-bold text-foreground text-center mb-8"
           >
-            <Heart className="w-5 h-5" fill="currentColor" />
-            <span>{isAuthenticated ? "الذهاب للرئيسية" : "سجّل الآن مجانًا"}</span>
-          </button>
+            كيف <span className="gradient-text">يعمل</span>؟
+          </motion.h2>
 
-          <p className="text-xs text-muted-foreground mt-4">
-            التسجيل مجاني • بياناتك آمنة
-          </p>
-        </div>
+          <div className="relative">
+            {/* Timeline Line */}
+            <div className="absolute right-6 top-6 bottom-6 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-transparent" />
+
+            <div className="space-y-6">
+              {[
+                { step: "١", title: "سجّل حسابك", desc: "أدخل فصيلة دمك ومدينتك", icon: Users },
+                { step: "٢", title: "استقبل التنبيهات", desc: "عند وجود طلب مطابق", icon: Bell },
+                { step: "٣", title: "تبرع وأنقذ حياة", desc: "تواصل مع المحتاج مباشرة", icon: Heart },
+              ].map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: 30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.2 }}
+                    className="flex items-start gap-4 relative"
+                  >
+                    <motion.div 
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      className="w-12 h-12 bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-2xl flex items-center justify-center font-bold text-lg shrink-0 shadow-lg shadow-primary/30 z-10"
+                    >
+                      {item.step}
+                    </motion.div>
+                    <div className="glass-card rounded-2xl p-4 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Icon className="w-4 h-4 text-primary" />
+                        <h3 className="font-bold text-foreground">{item.title}</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
       </section>
 
-      {/* Footer spacing */}
-      <div className="h-8" />
+      {/* Bottom CTA - Floating Card */}
+      <section className="px-4 py-10 pb-20">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-lg mx-auto"
+        >
+          <div className="glass-card rounded-3xl p-8 text-center relative overflow-hidden">
+            {/* Background Decoration */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5" />
+            
+            <div className="relative z-10">
+              <motion.div
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="flex items-center justify-center gap-3 mb-4"
+              >
+                <Heart className="w-8 h-8 text-primary" fill="currentColor" />
+                <span className="text-xl font-bold text-foreground">انضم لمجتمع المتبرعين</span>
+              </motion.div>
+
+              <p className="text-muted-foreground mb-6">
+                كن جزءاً من فريق إنقاذ الأرواح
+              </p>
+
+              <motion.button
+                onClick={handleGetStarted}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={cn(
+                  "w-full flex items-center justify-center gap-3",
+                  "bg-gradient-to-l from-primary to-accent",
+                  "text-primary-foreground",
+                  "rounded-2xl px-6 py-4",
+                  "font-bold text-lg",
+                  "shadow-xl shadow-primary/40",
+                  "transition-all duration-300"
+                )}
+              >
+                <Heart className="w-5 h-5" fill="currentColor" />
+                <span>{isAuthenticated ? "الذهاب للرئيسية" : "سجّل الآن مجانًا"}</span>
+              </motion.button>
+
+              <p className="text-xs text-muted-foreground mt-4">
+                ✓ التسجيل مجاني • ✓ بياناتك آمنة • ✓ دعم فني 24/7
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </section>
     </div>
   );
 }
