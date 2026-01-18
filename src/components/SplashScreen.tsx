@@ -27,6 +27,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
   }, [onComplete, isLoading]);
 
   const showCustomLogo = logoUrl && logoLoaded && !logoError;
+  const isLoadingLogo = isLoading || (logoUrl && !logoLoaded && !logoError);
 
   return (
     <AnimatePresence>
@@ -64,7 +65,15 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
               transition={{ type: "spring", stiffness: 150, damping: 12, delay: 0.2 }}
               className="relative"
             >
-              {showCustomLogo ? (
+              {isLoadingLogo ? (
+                <motion.div className="w-36 h-36 rounded-[2.5rem] bg-gradient-to-br from-primary/20 via-primary/10 to-accent/20 flex items-center justify-center shadow-2xl ring-4 ring-primary/20">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                    className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
+                  />
+                </motion.div>
+              ) : showCustomLogo ? (
                 <motion.div className="w-36 h-36 rounded-[2.5rem] overflow-hidden shadow-2xl ring-4 ring-primary/20 bg-white flex items-center justify-center">
                   <img src={logoUrl} alt="نبضة دم" className="w-full h-full object-contain p-2" />
                 </motion.div>
