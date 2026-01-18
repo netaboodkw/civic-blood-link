@@ -3,10 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ChevronRight, Droplets, Building2, User, FileText, AlertTriangle, Hash, Check } from "lucide-react";
+import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
+import { ChevronRight, Droplets, Building2, User, FileText, AlertTriangle, Hash, Check, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { z } from "zod";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
 
 // Kuwaiti hospitals
 const HOSPITALS = [
@@ -40,24 +43,32 @@ const URGENCY_LEVELS = [
   { value: "urgent", label: "عاجل جدًا", description: "فوري", color: "bg-destructive/10 text-destructive" },
 ] as const;
 
-// Validation schema
+// Validation schema - removed unitsNeeded
 const requestSchema = z.object({
   patientName: z.string().trim().min(2, "اسم المريض مطلوب (حرفين على الأقل)").max(100, "الاسم طويل جدًا"),
   fileNumber: z.string().trim().max(50, "رقم الملف طويل جدًا").optional(),
   bloodType: z.enum(BLOOD_TYPES, { required_error: "فصيلة الدم مطلوبة" }),
   hospital: z.string().min(1, "المستشفى مطلوب"),
   city: z.enum(CITIES, { required_error: "المحافظة مطلوبة" }),
-  unitsNeeded: z.number().min(1, "عدد الوحدات يجب أن يكون 1 على الأقل").max(10, "الحد الأقصى 10 وحدات"),
   urgencyLevel: z.enum(["normal", "high", "urgent"]),
   notes: z.string().trim().max(500, "الملاحظات طويلة جدًا").optional(),
 });
 
 type RequestFormData = z.infer<typeof requestSchema>;
 
+interface DuplicateInfo {
+  id: string;
+  patient_name: string;
+  hospital_name: string;
+  blood_type: string;
+  created_at: string;
+}
+
 export default function CreateRequest() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { checkForDuplicate, duplicateCheckDays } = useDuplicateCheck();
 
   // Form state
   const [patientName, setPatientName] = useState("");
@@ -66,10 +77,13 @@ export default function CreateRequest() {
   const [hospital, setHospital] = useState("");
   const [customHospital, setCustomHospital] = useState("");
   const [city, setCity] = useState<string>("مدينة الكويت");
-  const [unitsNeeded, setUnitsNeeded] = useState(1);
   const [urgencyLevel, setUrgencyLevel] = useState<"normal" | "high" | "urgent">("normal");
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Partial<Record<keyof RequestFormData | "customHospital", string>>>({});
+  
+  // Duplicate detection
+  const [duplicateWarning, setDuplicateWarning] = useState<DuplicateInfo | null>(null);
+  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
 
   const createRequestMutation = useMutation({
     mutationFn: async (data: RequestFormData) => {
@@ -85,7 +99,7 @@ export default function CreateRequest() {
         blood_type: data.bloodType,
         hospital_name: finalHospital,
         city: data.city,
-        units_needed: data.unitsNeeded,
+        units_needed: 1, // Default value
         urgency_level: data.urgencyLevel,
         notes: data.notes || null,
         status: "open",
@@ -115,7 +129,6 @@ export default function CreateRequest() {
         bloodType,
         hospital,
         city,
-        unitsNeeded,
         urgencyLevel,
         notes: notes || undefined,
       });
@@ -143,7 +156,7 @@ export default function CreateRequest() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -151,13 +164,46 @@ export default function CreateRequest() {
       return;
     }
 
+    const finalHospital = hospital === "أخرى" ? customHospital : hospital;
+
+    // Check for duplicates
+    setIsCheckingDuplicate(true);
+    try {
+      const result = await checkForDuplicate({
+        patientName,
+        hospitalName: finalHospital,
+        fileNumber: fileNumber || undefined,
+      });
+
+      if (result.isDuplicate && result.existingRequest) {
+        setDuplicateWarning(result.existingRequest);
+        setIsCheckingDuplicate(false);
+        return;
+      }
+    } catch (error) {
+      console.error("Error checking duplicate:", error);
+    }
+    setIsCheckingDuplicate(false);
+
     createRequestMutation.mutate({
       patientName,
       fileNumber: fileNumber || undefined,
       bloodType: bloodType as typeof BLOOD_TYPES[number],
       hospital,
       city: city as typeof CITIES[number],
-      unitsNeeded,
+      urgencyLevel,
+      notes: notes || undefined,
+    });
+  };
+
+  const handleForceSubmit = () => {
+    setDuplicateWarning(null);
+    createRequestMutation.mutate({
+      patientName,
+      fileNumber: fileNumber || undefined,
+      bloodType: bloodType as typeof BLOOD_TYPES[number],
+      hospital,
+      city: city as typeof CITIES[number],
       urgencyLevel,
       notes: notes || undefined,
     });
@@ -183,6 +229,43 @@ export default function CreateRequest() {
 
       <main className="pb-8 pt-4">
         <div className="max-w-lg mx-auto px-4">
+          {/* Duplicate Warning Modal */}
+          {duplicateWarning && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <div className="bg-card rounded-2xl p-6 max-w-sm w-full shadow-xl animate-scale-in">
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-amber-500/10 mx-auto mb-4">
+                  <AlertCircle className="w-8 h-8 text-amber-500" />
+                </div>
+                <h3 className="text-lg font-bold text-center text-foreground mb-2">
+                  طلب مشابه موجود
+                </h3>
+                <p className="text-sm text-muted-foreground text-center mb-4">
+                  يوجد طلب مشابه تم نشره خلال آخر {duplicateCheckDays} أيام:
+                </p>
+                <div className="glass rounded-xl p-4 mb-4 text-sm">
+                  <p><strong>المريض:</strong> {duplicateWarning.patient_name}</p>
+                  <p><strong>المستشفى:</strong> {duplicateWarning.hospital_name}</p>
+                  <p><strong>فصيلة الدم:</strong> {duplicateWarning.blood_type}</p>
+                  <p><strong>تاريخ النشر:</strong> {format(new Date(duplicateWarning.created_at), "d MMMM yyyy", { locale: ar })}</p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setDuplicateWarning(null)}
+                    className="flex-1 py-3 rounded-xl bg-muted text-foreground font-medium"
+                  >
+                    إلغاء
+                  </button>
+                  <button
+                    onClick={handleForceSubmit}
+                    className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-medium"
+                  >
+                    نشر على أي حال
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Patient Name */}
             <div className="animate-slide-up">
@@ -335,35 +418,8 @@ export default function CreateRequest() {
               </div>
             </div>
 
-            {/* Units Needed */}
-            <div className="animate-slide-up" style={{ animationDelay: "250ms" }}>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                عدد الوحدات المطلوبة *
-              </label>
-              <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => setUnitsNeeded(Math.max(1, unitsNeeded - 1))}
-                  className="w-12 h-12 bg-card border border-input rounded-xl text-xl font-bold ios-spring ios-press"
-                >
-                  -
-                </button>
-                <span className="text-2xl font-bold text-foreground w-12 text-center">
-                  {unitsNeeded}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setUnitsNeeded(Math.min(10, unitsNeeded + 1))}
-                  className="w-12 h-12 bg-card border border-input rounded-xl text-xl font-bold ios-spring ios-press"
-                >
-                  +
-                </button>
-                <span className="text-sm text-muted-foreground">وحدة</span>
-              </div>
-            </div>
-
             {/* Urgency Level */}
-            <div className="animate-slide-up" style={{ animationDelay: "300ms" }}>
+            <div className="animate-slide-up" style={{ animationDelay: "250ms" }}>
               <label className="block text-sm font-medium text-foreground mb-2">
                 <AlertTriangle className="w-4 h-4 inline-block ml-1" />
                 مستوى الاستعجال *
@@ -400,7 +456,7 @@ export default function CreateRequest() {
             </div>
 
             {/* Notes */}
-            <div className="animate-slide-up" style={{ animationDelay: "350ms" }}>
+            <div className="animate-slide-up" style={{ animationDelay: "300ms" }}>
               <label className="block text-sm font-medium text-foreground mb-2">
                 <FileText className="w-4 h-4 inline-block ml-1" />
                 ملاحظات إضافية (اختياري)
@@ -422,27 +478,24 @@ export default function CreateRequest() {
             </div>
 
             {/* Submit Button */}
-            <div className="pt-4 animate-slide-up" style={{ animationDelay: "400ms" }}>
+            <div className="animate-slide-up pt-2" style={{ animationDelay: "350ms" }}>
               <button
                 type="submit"
-                disabled={createRequestMutation.isPending}
+                disabled={createRequestMutation.isPending || isCheckingDuplicate}
                 className={cn(
-                  "w-full flex items-center justify-center gap-2",
-                  "bg-primary text-primary-foreground",
-                  "rounded-xl px-6 py-4",
-                  "font-semibold text-base",
-                  "shadow-card hover:shadow-elevated",
-                  "transition-all duration-200 ios-spring ios-press",
-                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                  "w-full bg-gradient-to-r from-primary to-primary/85 text-primary-foreground",
+                  "rounded-2xl py-4 font-bold text-[17px] shadow-lg glow-primary",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  "ios-spring ios-press"
                 )}
               >
-                {createRequestMutation.isPending ? (
-                  <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                {createRequestMutation.isPending || isCheckingDuplicate ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    جاري الإنشاء...
+                  </span>
                 ) : (
-                  <>
-                    <Droplets className="w-5 h-5" />
-                    <span>نشر الطلب</span>
-                  </>
+                  "نشر الطلب"
                 )}
               </button>
             </div>
