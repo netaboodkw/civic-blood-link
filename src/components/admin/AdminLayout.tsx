@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "./AdminSidebar";
 import { useAdminRole } from "@/hooks/useAdminRole";
+import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
@@ -11,7 +12,10 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
-  const { data: roleData, isLoading } = useAdminRole();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { data: roleData, isLoading: roleLoading } = useAdminRole();
+
+  const isLoading = authLoading || roleLoading;
 
   if (isLoading) {
     return (
@@ -26,8 +30,14 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
     );
   }
 
+  // Redirect to admin login if not authenticated
+  if (!isAuthenticated) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  // Redirect to admin login if not admin (will show error there)
   if (!roleData?.isAdmin) {
-    return <Navigate to="/home" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   return (
