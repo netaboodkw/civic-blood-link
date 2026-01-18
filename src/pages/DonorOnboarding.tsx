@@ -143,7 +143,7 @@ export default function DonorOnboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col" dir="rtl">
+    <div className="min-h-screen flex flex-col" dir="rtl">
       {/* Progress bar */}
       {step > 0 && (
         <div className="px-6 pt-4">
@@ -152,8 +152,8 @@ export default function DonorOnboarding() {
               <motion.div
                 key={i}
                 className={cn(
-                  "h-1 flex-1 rounded-full",
-                  step >= i ? "bg-primary" : "bg-muted"
+                  "h-1.5 flex-1 rounded-full",
+                  step >= i ? "bg-primary glow-primary" : "glass"
                 )}
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
@@ -185,21 +185,21 @@ export default function DonorOnboarding() {
             transition={{ duration: 0.3 }}
             className="flex-1 flex flex-col px-6 pt-16 pb-8"
           >
-            {/* Logo */}
+            {/* Logo with glass effect */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.1, duration: 0.4 }}
-              className="flex items-center justify-center w-24 h-24 bg-primary rounded-[28px] mx-auto mb-6 shadow-lg"
+              transition={{ delay: 0.1, duration: 0.5 }}
+              className="flex items-center justify-center w-28 h-28 glass-card rounded-[32px] mx-auto mb-6 glow-primary"
             >
-              <Droplet className="w-12 h-12 text-primary-foreground" fill="currentColor" />
+              <Droplet className="w-14 h-14 text-primary" fill="currentColor" />
             </motion.div>
 
             <motion.h1
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-3xl font-bold text-center text-foreground mb-2"
+              className="text-4xl font-bold text-center gradient-text mb-2"
             >
               نبضة دم
             </motion.h1>
@@ -221,9 +221,9 @@ export default function DonorOnboarding() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 + i * 0.1 }}
-                  className="flex items-center gap-4 bg-card rounded-2xl p-4"
+                  className="flex items-center gap-4 glass-card rounded-2xl p-4"
                 >
-                  <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-xl">
+                  <div className="flex items-center justify-center w-12 h-12 bg-primary/15 rounded-xl glow-primary">
                     <feature.icon className="w-6 h-6 text-primary" />
                   </div>
                   <div>
@@ -242,9 +242,9 @@ export default function DonorOnboarding() {
               className="space-y-3 mt-8"
             >
               <motion.button
-                whileTap={{ scale: 0.98 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={nextStep}
-                className="w-full bg-primary text-primary-foreground rounded-2xl py-4 font-semibold text-[17px] shadow-sm"
+                className="w-full bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-2xl py-4 font-semibold text-[17px] shadow-lg glow-primary"
               >
                 سجّل كمتبرع
               </motion.button>
@@ -276,7 +276,7 @@ export default function DonorOnboarding() {
             transition={{ duration: 0.3 }}
             className="flex-1 flex flex-col px-6 pt-8 pb-8"
           >
-            <h2 className="text-2xl font-bold text-foreground mb-2">البيانات الشخصية</h2>
+            <h2 className="text-2xl font-bold gradient-text mb-2">البيانات الشخصية</h2>
             <p className="text-muted-foreground mb-8">أدخل بياناتك للتسجيل</p>
 
             <div className="space-y-4 mb-auto">
@@ -288,7 +288,7 @@ export default function DonorOnboarding() {
                   placeholder="الاسم الكامل"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-card border-0 rounded-2xl py-4 pr-12 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full glass border-0 rounded-2xl py-4 pr-12 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </div>
 
@@ -300,7 +300,7 @@ export default function DonorOnboarding() {
                   placeholder="رقم الهاتف"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                  className="w-full bg-card border-0 rounded-2xl py-4 pr-12 pl-20 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full glass border-0 rounded-2xl py-4 pr-12 pl-20 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                   dir="ltr"
                 />
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
@@ -316,7 +316,7 @@ export default function DonorOnboarding() {
                   placeholder="البريد الإلكتروني"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-card border-0 rounded-2xl py-4 pr-12 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full glass border-0 rounded-2xl py-4 pr-12 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                   dir="ltr"
                 />
               </div>
@@ -329,15 +329,15 @@ export default function DonorOnboarding() {
                   placeholder="كلمة المرور (6 أحرف على الأقل)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-card border-0 rounded-2xl py-4 pr-12 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full glass border-0 rounded-2xl py-4 pr-12 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </div>
             </div>
 
             <motion.button
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ scale: 0.97 }}
               onClick={nextStep}
-              className="w-full bg-primary text-primary-foreground rounded-2xl py-4 font-semibold text-[17px] mt-6"
+              className="w-full bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-2xl py-4 font-semibold text-[17px] mt-6 shadow-lg glow-primary"
             >
               التالي
             </motion.button>
@@ -354,7 +354,7 @@ export default function DonorOnboarding() {
             transition={{ duration: 0.3 }}
             className="flex-1 flex flex-col px-6 pt-8 pb-8"
           >
-            <h2 className="text-2xl font-bold text-foreground mb-2">فصيلة الدم والموقع</h2>
+            <h2 className="text-2xl font-bold gradient-text mb-2">فصيلة الدم والموقع</h2>
             <p className="text-muted-foreground mb-8">اختر فصيلة دمك ومدينتك</p>
 
             {/* Blood Type */}
@@ -367,10 +367,10 @@ export default function DonorOnboarding() {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setBloodType(type)}
                     className={cn(
-                      "py-3 rounded-xl font-semibold text-base transition-all",
+                      "py-3.5 rounded-2xl font-bold text-base transition-all",
                       bloodType === type
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-card text-foreground"
+                        ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg glow-primary"
+                        : "glass text-foreground"
                     )}
                   >
                     {type}
@@ -389,10 +389,10 @@ export default function DonorOnboarding() {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setCity(c)}
                     className={cn(
-                      "py-3 px-4 rounded-xl font-medium text-sm transition-all flex items-center gap-2",
+                      "py-3.5 px-4 rounded-2xl font-medium text-sm transition-all flex items-center gap-2 justify-center",
                       city === c
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-card text-foreground"
+                        ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg glow-primary"
+                        : "glass text-foreground"
                     )}
                   >
                     <MapPin className="w-4 h-4" />
@@ -403,9 +403,9 @@ export default function DonorOnboarding() {
             </div>
 
             <motion.button
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ scale: 0.97 }}
               onClick={nextStep}
-              className="w-full bg-primary text-primary-foreground rounded-2xl py-4 font-semibold text-[17px] mt-6"
+              className="w-full bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-2xl py-4 font-semibold text-[17px] mt-6 shadow-lg glow-primary"
             >
               التالي
             </motion.button>

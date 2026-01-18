@@ -12,14 +12,14 @@ interface MobileLayoutProps {
 
 export function MobileLayout({ title, activeTab, onTabChange, children }: MobileLayoutProps) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <TopNavBar title={title} />
       
       <motion.main 
-        className="pb-24 pt-3"
+        className="pb-28 pt-4"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
         key={activeTab}
       >
         <div className="max-w-lg mx-auto px-4">
