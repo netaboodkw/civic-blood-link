@@ -11,23 +11,14 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: 'automatic',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f5f7fa',
     scrollEnabled: true,
-    allowsLinkPreview: false,
-    limitsNavigationsToAppBoundDomains: true
+    allowsLinkPreview: false
   },
   plugins: {
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
-    StatusBar: {
-      style: 'Dark',
-      backgroundColor: '#ffffff'
-    },
-    Keyboard: {
-      resize: 'body',
-      resizeOnFullScreen: true
-    }
   },
 };
 
