@@ -23,7 +23,10 @@ interface BottomTabBarProps {
 
 export function BottomTabBar({ activeTab, onTabChange }: BottomTabBarProps) {
   return (
-    <nav className="flex-shrink-0 z-50 bg-background/95 backdrop-blur-xl border-t border-border/50 pb-[env(safe-area-inset-bottom)]">
+    <nav 
+      className="flex-shrink-0 z-50 bg-background border-t border-border/50"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
       <div className="flex items-center justify-around h-[56px] max-w-lg mx-auto px-2">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
