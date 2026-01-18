@@ -183,10 +183,13 @@ export default function PublicRequests() {
   const activeFiltersCount = [cityFilter, urgencyFilter, donorBloodType].filter(f => f !== "all").length + (showCompatibleOnly ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="fixed inset-0 flex flex-col bg-gradient-to-b from-background to-muted/30">
       {/* Header */}
-      <header className="sticky top-0 z-40 glass border-b border-glass-border safe-area-top">
-        <div className="flex items-center h-14 px-4 max-w-lg mx-auto">
+      <header 
+        className="flex-shrink-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/50"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
+        <div className="flex items-center h-[44px] px-4 max-w-lg mx-auto">
           <button
             onClick={() => navigate("/")}
             className="flex items-center gap-1 text-primary ios-spring ios-press"
@@ -194,14 +197,14 @@ export default function PublicRequests() {
             <ChevronRight className="w-5 h-5" />
             <span className="text-sm font-medium">رجوع</span>
           </button>
-          <h1 className="flex-1 text-center text-lg font-semibold text-foreground pr-12">
+          <h1 className="flex-1 text-center text-[17px] font-semibold text-foreground pr-12">
             طلبات الدم
           </h1>
         </div>
       </header>
 
-      <main className="pb-24 pt-4">
-        <div className="max-w-lg mx-auto px-4">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden overscroll-none">
+        <div className="max-w-lg mx-auto px-4 py-4" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' }}>
           
           {/* Compatible Toggle for logged in users */}
           {isAuthenticated && userBloodType && (

@@ -210,10 +210,13 @@ export default function CreateRequest() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="fixed inset-0 flex flex-col bg-gradient-to-b from-background to-muted/30">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-navBar/80 backdrop-blur-xl border-b border-border safe-area-top">
-        <div className="flex items-center h-14 px-4 max-w-lg mx-auto">
+      <header 
+        className="flex-shrink-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/50"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
+        <div className="flex items-center h-[44px] px-4 max-w-lg mx-auto">
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-1 text-primary ios-spring ios-press"
@@ -221,14 +224,14 @@ export default function CreateRequest() {
             <ChevronRight className="w-5 h-5" />
             <span className="text-sm font-medium">رجوع</span>
           </button>
-          <h1 className="flex-1 text-center text-lg font-semibold text-navBar-title pr-12">
+          <h1 className="flex-1 text-center text-[17px] font-semibold text-foreground pr-12">
             إنشاء طلب دم
           </h1>
         </div>
       </header>
 
-      <main className="pb-8 pt-4">
-        <div className="max-w-lg mx-auto px-4">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden overscroll-none">
+        <div className="max-w-lg mx-auto px-4 py-4 pb-8" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' }}>
           {/* Duplicate Warning Modal */}
           {duplicateWarning && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
