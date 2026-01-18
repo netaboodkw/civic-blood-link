@@ -1,8 +1,7 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "./AdminSidebar";
-import { useAdminRole } from "@/hooks/useAdminRole";
-import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
@@ -12,10 +11,40 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { data: roleData, isLoading: roleLoading } = useAdminRole();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const isLoading = authLoading || roleLoading;
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session?.user) {
+          setIsAdmin(false);
+          setIsLoading(false);
+          return;
+        }
+
+        const { data: roles, error } = await supabase.rpc("get_user_roles", {
+          _user_id: session.user.id,
+        });
+
+        if (error) {
+          console.error("Error checking admin role:", error);
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(roles?.includes("admin") || false);
+        }
+      } catch (error) {
+        console.error("Error in admin check:", error);
+        setIsAdmin(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, []);
 
   if (isLoading) {
     return (
@@ -30,13 +59,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
     );
   }
 
-  // Redirect to admin login if not authenticated
-  if (!isAuthenticated) {
-    return <Navigate to="/admin/login" replace />;
-  }
-
-  // Redirect to admin login if not admin (will show error there)
-  if (!roleData?.isAdmin) {
+  if (!isAdmin) {
     return <Navigate to="/admin/login" replace />;
   }
 
