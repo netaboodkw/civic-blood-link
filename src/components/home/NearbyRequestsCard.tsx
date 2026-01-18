@@ -21,33 +21,32 @@ export function NearbyRequestsCard({
 
   return (
     <motion.div 
-      className="bg-card rounded-2xl overflow-hidden"
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1, duration: 0.4, ease: "easeOut" }}
+      className="glass-card rounded-3xl overflow-hidden"
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: 0.1, duration: 0.5, ease: "easeOut" }}
     >
-      {/* Card content */}
       <div className="p-5">
         {isLoading ? (
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-muted animate-pulse-soft" />
+            <div className="w-14 h-14 rounded-2xl shimmer" />
             <div className="flex-1 space-y-2">
-              <div className="h-5 w-20 bg-muted rounded-lg animate-pulse-soft" />
-              <div className="h-4 w-32 bg-muted rounded-lg animate-pulse-soft" />
+              <div className="h-5 w-20 rounded-lg shimmer" />
+              <div className="h-4 w-32 rounded-lg shimmer" />
             </div>
           </div>
         ) : (
           <div className="flex items-center gap-4">
-            {/* Count display */}
+            {/* Count display with glow */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.3, ease: "easeOut" }}
+              transition={{ delay: 0.25, duration: 0.4, ease: "easeOut" }}
               className={cn(
                 "flex items-center justify-center w-14 h-14 rounded-2xl",
                 displayCount > 0 
-                  ? "bg-gradient-to-br from-accent/15 to-accent/5" 
-                  : "bg-muted"
+                  ? "bg-gradient-to-br from-accent/20 to-accent/5 shadow-[0_0_20px_hsl(12_80%_62%/0.25)]" 
+                  : "glass"
               )}
             >
               {error ? (
@@ -67,9 +66,9 @@ export function NearbyRequestsCard({
             {/* Info */}
             <motion.div 
               className="flex-1"
-              initial={{ opacity: 0, x: -8 }}
+              initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.25, duration: 0.3 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
             >
               <h3 className="text-base font-semibold text-foreground mb-0.5">
                 طلبات قريبة
@@ -88,16 +87,17 @@ export function NearbyRequestsCard({
           </div>
         )}
 
-        {/* CTA Button */}
+        {/* CTA Button - Glass style */}
         <motion.button
           onClick={onViewRequests}
           disabled={isLoading || (!isEligible && displayCount === 0)}
-          whileTap={{ scale: 0.98 }}
+          whileTap={{ scale: 0.97 }}
           className={cn(
-            "mt-4 w-full flex items-center justify-between",
-            "bg-muted hover:bg-muted/80 rounded-xl px-4 py-3",
+            "mt-5 w-full flex items-center justify-between",
+            "glass rounded-2xl px-4 py-3.5",
             "text-foreground font-medium text-[15px]",
-            "transition-colors duration-200",
+            "transition-all duration-300",
+            "hover:bg-primary/5",
             "disabled:opacity-50 disabled:cursor-not-allowed"
           )}
         >
