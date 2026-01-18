@@ -18,17 +18,40 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, CheckCircle, XCircle, Clock, Trash2, Loader2, FileText, MapPin, Droplet, Building2, AlertTriangle, MousePointer } from "lucide-react";
+import { MoreHorizontal, CheckCircle, XCircle, Clock, Trash2, Loader2, FileText, MapPin, Droplet, Building2, AlertTriangle, MousePointer, MessageCircle, Send, Users } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+import type { Database } from "@/integrations/supabase/types";
+
+type BloodType = Database["public"]["Enums"]["blood_type"];
+
+// Blood type compatibility map - who can donate to whom
+const CAN_RECEIVE_FROM: Record<BloodType, BloodType[]> = {
+  "A+": ["A+", "A-", "O+", "O-"],
+  "A-": ["A-", "O-"],
+  "B+": ["B+", "B-", "O+", "O-"],
+  "B-": ["B-", "O-"],
+  "AB+": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+  "AB-": ["A-", "B-", "AB-", "O-"],
+  "O+": ["O+", "O-"],
+  "O-": ["O-"],
+};
 
 export default function AdminRequests() {
   const { requests, isLoading, updateStatus, deleteRequest, isUpdating, isDeleting } = useAdminRequests();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [sendDialogOpen, setSendDialogOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [matchingCount, setMatchingCount] = useState(0);
+  const [isSending, setIsSending] = useState(false);
+  const [isLoadingMatching, setIsLoadingMatching] = useState(false);
 
   const statusLabels: Record<string, string> = {
     open: "مفتوح",
@@ -55,6 +78,81 @@ export default function AdminRequests() {
     }
     setDeleteDialogOpen(false);
     setSelectedRequestId(null);
+  };
+
+  const handleSendToMatchingClick = async (request: any) => {
+    setSelectedRequest(request);
+    setIsLoadingMatching(true);
+    setSendDialogOpen(true);
+
+    try {
+      // Get eligible donors with compatible blood types in the same city
+      const compatibleTypes = CAN_RECEIVE_FROM[request.blood_type] || [];
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+      const { count, error } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .in("blood_type", compatibleTypes)
+        .eq("city", request.city)
+        .or(`last_donation_date.is.null,last_donation_date.lt.${ninetyDaysAgo.toISOString()}`);
+
+      if (error) throw error;
+      setMatchingCount(count || 0);
+    } catch (error) {
+      console.error("Error fetching matching donors:", error);
+      setMatchingCount(0);
+    } finally {
+      setIsLoadingMatching(false);
+    }
+  };
+
+  const handleConfirmSend = async () => {
+    if (!selectedRequest) return;
+    
+    setIsSending(true);
+    try {
+      // Get all matching donors
+      const compatibleTypes = CAN_RECEIVE_FROM[selectedRequest.blood_type] || [];
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+      const { data: donors, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, phone")
+        .in("blood_type", compatibleTypes)
+        .eq("city", selectedRequest.city)
+        .or(`last_donation_date.is.null,last_donation_date.lt.${ninetyDaysAgo.toISOString()}`);
+
+      if (error) throw error;
+
+      // Create in-app notifications for all matching donors
+      const notifications = donors?.map(donor => ({
+        user_id: donor.id,
+        title: selectedRequest.urgency_level === "urgent" ? "🚨 طلب عاجل للتبرع بالدم!" : "📢 طلب تبرع بالدم",
+        body: `يوجد طلب للتبرع بفصيلة ${selectedRequest.blood_type} في ${selectedRequest.hospital_name}، ${selectedRequest.city}`,
+        type: "blood_request",
+        related_request_id: selectedRequest.id,
+      })) || [];
+
+      if (notifications.length > 0) {
+        const { error: notifError } = await supabase
+          .from("notifications")
+          .insert(notifications);
+        
+        if (notifError) throw notifError;
+      }
+
+      toast.success(`تم إرسال الإشعار لـ ${donors?.length || 0} متبرع`);
+      setSendDialogOpen(false);
+      setSelectedRequest(null);
+    } catch (error) {
+      console.error("Error sending notifications:", error);
+      toast.error("حدث خطأ أثناء إرسال الإشعارات");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -181,6 +279,15 @@ export default function AdminRequests() {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
+                      onClick={() => handleSendToMatchingClick(request)}
+                      disabled={request.status !== "open"}
+                      className="gap-2 text-green-600 focus:text-green-600"
+                    >
+                      <Send className="h-4 w-4" strokeWidth={2} />
+                      إرسال للمطابقين
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
                       onClick={() => handleDeleteClick(request.id)}
                       className="gap-2 text-destructive focus:text-destructive"
                     >
@@ -210,6 +317,71 @@ export default function AdminRequests() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Send to Matching Donors Dialog */}
+      <AlertDialog open={sendDialogOpen} onOpenChange={setSendDialogOpen}>
+        <AlertDialogContent className="glass-card border-border/50">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-right flex items-center gap-2">
+              <Send className="h-5 w-5 text-green-500" />
+              إرسال إشعار للمتبرعين المطابقين
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-right space-y-3">
+              {isLoadingMatching ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : (
+                <>
+                  <p>
+                    سيتم إرسال إشعار لجميع المتبرعين المؤهلين الذين يطابقون فصيلة الدم والمدينة.
+                  </p>
+                  <div className="glass rounded-xl p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+                      <Users className="h-5 w-5 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-foreground">{matchingCount} متبرع</p>
+                      <p className="text-xs text-muted-foreground">سيستلمون الإشعار</p>
+                    </div>
+                  </div>
+                  {selectedRequest && (
+                    <div className="glass rounded-xl p-4 space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Droplet className="h-4 w-4 text-red-500" fill="currentColor" />
+                        <span>فصيلة الدم: <strong>{selectedRequest.blood_type}</strong></span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span>المدينة: <strong>{selectedRequest.city}</strong></span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <span>المستشفى: <strong>{selectedRequest.hospital_name}</strong></span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel className="glass" disabled={isSending}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmSend}
+              disabled={matchingCount === 0 || isSending || isLoadingMatching}
+              className="bg-green-500 text-white hover:bg-green-600 gap-2"
+            >
+              {isSending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+              إرسال الإشعار
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

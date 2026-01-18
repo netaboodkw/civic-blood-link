@@ -26,12 +26,6 @@ export default function AdminUsers() {
     user: "مستخدم",
   };
 
-  const userRoleLabels: Record<string, string> = {
-    donor: "متبرع",
-    requester: "طالب",
-    both: "كلاهما",
-  };
-
   return (
     <AdminLayout title="إدارة المستخدمين">
       <div className="space-y-3">
@@ -92,9 +86,6 @@ export default function AdminUsers() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 mt-2 flex-wrap">
-                      <Badge variant="outline" className="text-xs">
-                        {userRoleLabels[user.role] || user.role}
-                      </Badge>
                       <span className="text-xs text-muted-foreground">
                         انضم {format(new Date(user.created_at), "dd MMM yyyy", { locale: ar })}
                       </span>
