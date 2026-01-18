@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Droplet, Mail, Lock, User, MapPin, ChevronLeft, Phone, Check, ExternalLink, AlertCircle } from "lucide-react";
+import { Mail, Lock, User, MapPin, ChevronLeft, Phone, Check, ExternalLink, AlertCircle } from "lucide-react";
+import localLogo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -223,9 +224,9 @@ export default function Auth() {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.4, type: "spring" }}
-            className="flex items-center justify-center w-24 h-24 glass-card rounded-[28px] mb-6 glow-primary"
+            className="flex items-center justify-center w-24 h-24 glass-card rounded-[28px] mb-6 glow-primary overflow-hidden"
           >
-            <Droplet className="w-12 h-12 text-primary" fill="currentColor" strokeWidth={1.5} />
+            <img src={localLogo} alt="نبضة دم" className="w-full h-full object-contain p-2" />
           </motion.div>
 
           <motion.h1
