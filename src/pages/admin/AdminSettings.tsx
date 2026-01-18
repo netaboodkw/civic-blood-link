@@ -18,6 +18,12 @@ export default function AdminSettings() {
   const [duplicateDays, setDuplicateDays] = useState("3");
   const [isArchiving, setIsArchiving] = useState(false);
   
+  // Archive per urgency
+  const [archiveDaysUrgent, setArchiveDaysUrgent] = useState("3");
+  const [archiveDaysHigh, setArchiveDaysHigh] = useState("5");
+  const [archiveDaysNormal, setArchiveDaysNormal] = useState("7");
+  const [autoArchiveEnabled, setAutoArchiveEnabled] = useState(true);
+  
   // WhatsApp settings
   const [whatsappEnabled, setWhatsappEnabled] = useState(false);
   const [urgencyFilter, setUrgencyFilter] = useState<"all" | "high" | "urgent">("all");
@@ -36,6 +42,10 @@ export default function AdminSettings() {
       setUrgencyFilter(settings.whatsapp_urgency_filter);
       setBloodTypeFilter(settings.whatsapp_blood_type_filter);
       setLogoUrl(settings.app_logo_url || "");
+      setArchiveDaysUrgent(settings.archive_days_urgent.toString());
+      setArchiveDaysHigh(settings.archive_days_high.toString());
+      setArchiveDaysNormal(settings.archive_days_normal.toString());
+      setAutoArchiveEnabled(settings.auto_archive_enabled);
     }
   }, [settings]);
 
@@ -67,6 +77,30 @@ export default function AdminSettings() {
     }
   };
 
+  const handleSaveArchivePerUrgency = async () => {
+    const urgentVal = parseInt(archiveDaysUrgent);
+    const highVal = parseInt(archiveDaysHigh);
+    const normalVal = parseInt(archiveDaysNormal);
+    
+    if (isNaN(urgentVal) || urgentVal < 1 || urgentVal > 30 ||
+        isNaN(highVal) || highVal < 1 || highVal > 30 ||
+        isNaN(normalVal) || normalVal < 1 || normalVal > 30) {
+      toast.error("يجب أن تكون الأيام بين 1 و 30");
+      return;
+    }
+    try {
+      await Promise.all([
+        updateSetting.mutateAsync({ key: "archive_days_urgent", value: archiveDaysUrgent }),
+        updateSetting.mutateAsync({ key: "archive_days_high", value: archiveDaysHigh }),
+        updateSetting.mutateAsync({ key: "archive_days_normal", value: archiveDaysNormal }),
+        updateSetting.mutateAsync({ key: "auto_archive_enabled", value: autoArchiveEnabled.toString() }),
+      ]);
+      toast.success("تم حفظ إعدادات الأرشفة حسب الاستعجال");
+    } catch {
+      toast.error("حدث خطأ أثناء الحفظ");
+    }
+  };
+
   const handleSaveDuplicate = async () => {
     const value = parseInt(duplicateDays);
     if (isNaN(value) || value < 1 || value > 14) {
@@ -84,20 +118,45 @@ export default function AdminSettings() {
   const handleArchiveNow = async () => {
     setIsArchiving(true);
     try {
-      const archiveDate = new Date();
-      archiveDate.setDate(archiveDate.getDate() - parseInt(archiveDays));
+      let totalArchived = 0;
       
-      const { data, error } = await supabase
+      // Archive urgent requests
+      const urgentDate = new Date();
+      urgentDate.setDate(urgentDate.getDate() - parseInt(archiveDaysUrgent));
+      const { data: urgentData } = await supabase
         .from("blood_requests")
         .update({ status: "expired" })
         .eq("status", "open")
-        .lt("created_at", archiveDate.toISOString())
+        .eq("urgency_level", "urgent")
+        .lt("created_at", urgentDate.toISOString())
         .select();
-
-      if (error) throw error;
+      totalArchived += urgentData?.length || 0;
       
-      const count = data?.length || 0;
-      toast.success(`تم أرشفة ${count} طلب`);
+      // Archive high priority requests
+      const highDate = new Date();
+      highDate.setDate(highDate.getDate() - parseInt(archiveDaysHigh));
+      const { data: highData } = await supabase
+        .from("blood_requests")
+        .update({ status: "expired" })
+        .eq("status", "open")
+        .eq("urgency_level", "high")
+        .lt("created_at", highDate.toISOString())
+        .select();
+      totalArchived += highData?.length || 0;
+      
+      // Archive normal requests
+      const normalDate = new Date();
+      normalDate.setDate(normalDate.getDate() - parseInt(archiveDaysNormal));
+      const { data: normalData } = await supabase
+        .from("blood_requests")
+        .update({ status: "expired" })
+        .eq("status", "open")
+        .or("urgency_level.is.null,urgency_level.eq.normal")
+        .lt("created_at", normalDate.toISOString())
+        .select();
+      totalArchived += normalData?.length || 0;
+      
+      toast.success(`تم أرشفة ${totalArchived} طلب`);
     } catch (error) {
       console.error("Error archiving:", error);
       toast.error("حدث خطأ أثناء الأرشفة");
@@ -278,7 +337,7 @@ export default function AdminSettings() {
           </div>
         </motion.div>
 
-        {/* Auto Archive Days */}
+        {/* Archive Settings Per Urgency */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -290,47 +349,99 @@ export default function AdminSettings() {
               <Archive className="h-6 w-6 text-amber-500" strokeWidth={1.5} />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-foreground mb-1">أرشفة الطلبات تلقائياً</h3>
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="font-bold text-foreground">أرشفة الطلبات حسب الاستعجال</h3>
+                <button
+                  onClick={() => setAutoArchiveEnabled(!autoArchiveEnabled)}
+                  className={cn(
+                    "relative w-12 h-6 rounded-full transition-colors",
+                    autoArchiveEnabled ? "bg-amber-500" : "bg-muted"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform",
+                      autoArchiveEnabled ? "right-0.5" : "left-0.5"
+                    )}
+                  />
+                </button>
+              </div>
               <p className="text-sm text-muted-foreground mb-4">
-                أرشفة الطلبات المفتوحة بعد عدد معين من الأيام
+                تحديد فترة أرشفة مختلفة لكل مستوى استعجال
               </p>
-              <div className="flex items-center gap-3 flex-wrap">
-                <input
-                  type="number"
-                  value={archiveDays}
-                  onChange={(e) => setArchiveDays(e.target.value)}
-                  min={1}
-                  max={30}
-                  className="w-24 bg-background border border-input rounded-xl py-2 px-3 text-center font-bold text-lg"
-                />
-                <span className="text-muted-foreground">يوم</span>
-                <button
-                  onClick={handleSaveArchive}
-                  disabled={updateSetting.isPending}
-                  className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-50"
-                >
-                  {updateSetting.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4" />
-                  )}
-                  حفظ
-                </button>
-              </div>
-              <div className="mt-4 pt-4 border-t border-border/50">
-                <button
-                  onClick={handleArchiveNow}
-                  disabled={isArchiving}
-                  className="flex items-center gap-2 bg-amber-500/10 text-amber-600 px-4 py-2 rounded-xl text-sm font-medium hover:bg-amber-500/20 transition-colors disabled:opacity-50"
-                >
-                  {isArchiving ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Archive className="w-4 h-4" />
-                  )}
-                  أرشفة الطلبات القديمة الآن
-                </button>
-              </div>
+              
+              {autoArchiveEnabled && (
+                <div className="space-y-4 pt-4 border-t border-border/50">
+                  {/* Urgent */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Badge className="bg-red-500 text-white min-w-[70px] justify-center">عاجل</Badge>
+                    <input
+                      type="number"
+                      value={archiveDaysUrgent}
+                      onChange={(e) => setArchiveDaysUrgent(e.target.value)}
+                      min={1}
+                      max={30}
+                      className="w-20 bg-background border border-input rounded-xl py-2 px-3 text-center font-bold"
+                    />
+                    <span className="text-muted-foreground text-sm">يوم</span>
+                  </div>
+                  
+                  {/* High */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Badge className="bg-orange-500 text-white min-w-[70px] justify-center">مستعجل</Badge>
+                    <input
+                      type="number"
+                      value={archiveDaysHigh}
+                      onChange={(e) => setArchiveDaysHigh(e.target.value)}
+                      min={1}
+                      max={30}
+                      className="w-20 bg-background border border-input rounded-xl py-2 px-3 text-center font-bold"
+                    />
+                    <span className="text-muted-foreground text-sm">يوم</span>
+                  </div>
+                  
+                  {/* Normal */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Badge className="bg-blue-500 text-white min-w-[70px] justify-center">عادي</Badge>
+                    <input
+                      type="number"
+                      value={archiveDaysNormal}
+                      onChange={(e) => setArchiveDaysNormal(e.target.value)}
+                      min={1}
+                      max={30}
+                      className="w-20 bg-background border border-input rounded-xl py-2 px-3 text-center font-bold"
+                    />
+                    <span className="text-muted-foreground text-sm">يوم</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 pt-2">
+                    <button
+                      onClick={handleSaveArchivePerUrgency}
+                      disabled={updateSetting.isPending}
+                      className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-50"
+                    >
+                      {updateSetting.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
+                      حفظ الإعدادات
+                    </button>
+                    <button
+                      onClick={handleArchiveNow}
+                      disabled={isArchiving}
+                      className="flex items-center gap-2 bg-amber-500/10 text-amber-600 px-4 py-2 rounded-xl text-sm font-medium hover:bg-amber-500/20 transition-colors disabled:opacity-50"
+                    >
+                      {isArchiving ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Archive className="w-4 h-4" />
+                      )}
+                      أرشفة الآن
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
