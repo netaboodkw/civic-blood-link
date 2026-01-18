@@ -47,6 +47,9 @@ export function usePushNotifications() {
 
   // Request and register for push notifications
   const requestPushPermission = useCallback(async () => {
+    console.log('🔔 [PUSH] requestPushPermission called');
+    console.log('🔔 [PUSH] Is native:', Capacitor.isNativePlatform());
+    
     if (!Capacitor.isNativePlatform()) {
       toast.error('الإشعارات متاحة فقط على التطبيق');
       return false;
@@ -56,20 +59,24 @@ export function usePushNotifications() {
     
     try {
       // Request permission
+      console.log('🔔 [PUSH] Requesting permissions...');
       const permStatus = await PushNotifications.requestPermissions();
-      console.log('Permission status:', permStatus);
+      console.log('🔔 [PUSH] Permission result:', JSON.stringify(permStatus));
       
       if (permStatus.receive === 'granted') {
         // Register for push notifications
+        console.log('🔔 [PUSH] Permission granted, calling register()...');
         await PushNotifications.register();
+        console.log('🔔 [PUSH] register() called successfully');
         toast.success('جاري تسجيل الإشعارات...');
         return true;
       } else {
+        console.log('🔔 [PUSH] Permission denied:', permStatus.receive);
         toast.error('يرجى السماح بالإشعارات من إعدادات الجهاز');
         return false;
       }
     } catch (error) {
-      console.error('Error requesting push permission:', error);
+      console.error('🔔 [PUSH] Error requesting permission:', error);
       toast.error('حدث خطأ أثناء تفعيل الإشعارات');
       return false;
     } finally {
@@ -80,50 +87,69 @@ export function usePushNotifications() {
   // Initialize push notifications
   useEffect(() => {
     const initPushNotifications = async () => {
+      console.log('🔔 [PUSH] Initializing push notifications...');
+      console.log('🔔 [PUSH] Is native platform:', Capacitor.isNativePlatform());
+      console.log('🔔 [PUSH] Platform:', Capacitor.getPlatform());
+      
       // Check if running on native platform
       if (!Capacitor.isNativePlatform()) {
-        console.log('Push notifications only work on native platforms');
+        console.log('🔔 [PUSH] Not on native platform, skipping');
         return;
       }
 
       setIsSupported(true);
+      console.log('🔔 [PUSH] Push is supported, setting up listeners...');
 
       // Set up listeners first
       PushNotifications.addListener('registration', async (tokenData) => {
-        console.log('Push registration success, token: ' + tokenData.value);
+        console.log('🔔 [PUSH] ✅ Registration SUCCESS!');
+        console.log('🔔 [PUSH] Token received:', tokenData.value);
+        console.log('🔔 [PUSH] Token length:', tokenData.value?.length);
+        
         setToken(tokenData.value);
         // Save token locally
         localStorage.setItem(PUSH_TOKEN_KEY, tokenData.value);
+        console.log('🔔 [PUSH] Token saved to localStorage');
+        
         // Try to save to database
+        console.log('🔔 [PUSH] Attempting to save to database...');
         const saved = await savePushToken(tokenData.value);
+        console.log('🔔 [PUSH] Save to database result:', saved);
+        
         if (saved) {
           toast.success('تم تفعيل الإشعارات بنجاح!');
+        } else {
+          toast.info('تم الحصول على التوكن، سيتم حفظه عند تسجيل الدخول');
         }
       });
 
       PushNotifications.addListener('registrationError', (error) => {
-        console.error('Error on registration: ' + JSON.stringify(error));
-        toast.error('فشل تسجيل الإشعارات: ' + JSON.stringify(error));
+        console.error('🔔 [PUSH] ❌ Registration ERROR:', JSON.stringify(error));
+        toast.error('فشل تسجيل الإشعارات: ' + (error.error || JSON.stringify(error)));
       });
 
       PushNotifications.addListener('pushNotificationReceived', (notification) => {
-        console.log('Push received: ' + JSON.stringify(notification));
+        console.log('🔔 [PUSH] Notification received:', JSON.stringify(notification));
         toast(notification.title || 'إشعار جديد', {
           description: notification.body,
         });
       });
 
       PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-        console.log('Push action performed: ' + JSON.stringify(notification));
+        console.log('🔔 [PUSH] Action performed:', JSON.stringify(notification));
       });
 
       // Check current permission status
+      console.log('🔔 [PUSH] Checking current permissions...');
       const permStatus = await PushNotifications.checkPermissions();
-      console.log('Current permission status:', permStatus);
+      console.log('🔔 [PUSH] Permission status:', JSON.stringify(permStatus));
       
       if (permStatus.receive === 'granted') {
-        // Already have permission, register
+        console.log('🔔 [PUSH] Permission already granted, registering...');
         await PushNotifications.register();
+        console.log('🔔 [PUSH] Register called');
+      } else {
+        console.log('🔔 [PUSH] Permission not granted yet');
       }
     };
 
