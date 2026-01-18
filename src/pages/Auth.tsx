@@ -488,7 +488,8 @@ export default function Auth() {
                   placeholder="الاسم الكامل"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-right"
+                  className="w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  dir="rtl"
                 />
               </div>
 
@@ -569,8 +570,8 @@ export default function Auth() {
                   placeholder="كلمة المرور (6 أحرف على الأقل)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-left"
-                  dir="ltr"
+                  className="w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  dir="rtl"
                 />
               </div>
             </div>
