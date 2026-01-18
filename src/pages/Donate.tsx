@@ -6,6 +6,7 @@ import type { TabType } from "@/components/layout/BottomTabBar";
 import { useProfile } from "@/hooks/useProfile";
 import { useDonationLogs } from "@/hooks/useDonationLogs";
 import { NewDonationDialog } from "@/components/donate/NewDonationDialog";
+import { DonationLocationsCard } from "@/components/donate/DonationLocationsCard";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -119,6 +120,9 @@ export default function Donate() {
             </div>
           )}
         </motion.div>
+
+        {/* Donation Locations */}
+        <DonationLocationsCard />
 
         {/* New Donation Button */}
         <motion.button
