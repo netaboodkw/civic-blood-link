@@ -1,14 +1,18 @@
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Bell, MessageCircle, Clock, AlertTriangle, Save, Loader2, CheckCircle, Smartphone } from "lucide-react";
+import { Bell, MessageCircle, Clock, AlertTriangle, Save, Loader2, CheckCircle, Smartphone, Send } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useAppSettings, useUpdateAppSetting } from "@/hooks/useAppSettings";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AdminNotifications() {
   const { data: settings, isLoading } = useAppSettings();
   const updateSetting = useUpdateAppSetting();
+  const [isSendingTest, setIsSendingTest] = useState(false);
+  const [testTitle, setTestTitle] = useState("اختبار الإشعارات");
+  const [testBody, setTestBody] = useState("هذا إشعار تجريبي من نبضة دم!");
   
   // Eligibility End Notification
   const [eligibilityEndEnabled, setEligibilityEndEnabled] = useState(true);
@@ -78,6 +82,28 @@ export default function AdminNotifications() {
     );
   }
 
+  const handleSendTestNotification = async () => {
+    setIsSendingTest(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-ios-push', {
+        body: {
+          title: testTitle,
+          body: testBody,
+        }
+      });
+      
+      if (error) throw error;
+      
+      console.log('Test notification result:', data);
+      toast.success(`تم إرسال الإشعار! (${data.sent} ناجح، ${data.failed} فاشل)`);
+    } catch (error: any) {
+      console.error('Error sending test notification:', error);
+      toast.error('فشل إرسال الإشعار: ' + error.message);
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
+
   return (
     <AdminLayout title="إدارة الإشعارات">
       <div className="space-y-4">
@@ -100,6 +126,61 @@ export default function AdminNotifications() {
             حفظ جميع الإعدادات
           </motion.button>
         </div>
+
+        {/* Test Notification */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card rounded-2xl p-5 border-2 border-primary/20"
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 glass rounded-xl flex items-center justify-center bg-primary/10 shrink-0">
+              <Send className="h-6 w-6 text-primary" strokeWidth={1.5} />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-foreground mb-1">إرسال إشعار تجريبي</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                أرسل إشعار لجميع المستخدمين الذين لديهم توكن إشعارات
+              </p>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">العنوان</label>
+                  <input
+                    type="text"
+                    value={testTitle}
+                    onChange={(e) => setTestTitle(e.target.value)}
+                    className="w-full bg-background border border-input rounded-xl py-2 px-4 text-sm"
+                    placeholder="عنوان الإشعار"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">المحتوى</label>
+                  <textarea
+                    value={testBody}
+                    onChange={(e) => setTestBody(e.target.value)}
+                    rows={2}
+                    className="w-full bg-background border border-input rounded-xl py-2 px-4 text-sm resize-none"
+                    placeholder="محتوى الإشعار"
+                  />
+                </div>
+                <motion.button
+                  onClick={handleSendTestNotification}
+                  whileTap={{ scale: 0.95 }}
+                  disabled={isSendingTest || !testTitle || !testBody}
+                  className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-bold shadow-lg disabled:opacity-50 w-full justify-center"
+                >
+                  {isSendingTest ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Send className="w-5 h-5" />
+                  )}
+                  إرسال إشعار تجريبي
+                </motion.button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Notification Channels */}
         <motion.div
