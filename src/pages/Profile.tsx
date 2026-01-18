@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
-import { User, MapPin, Droplets, LogOut, Phone, Edit3, Check, X } from "lucide-react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { User, MapPin, Droplets, LogOut, Phone, Edit3, Check, X, Bell, BellOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { TabType } from "@/components/layout/BottomTabBar";
@@ -24,6 +25,7 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState<TabType>("profile");
   const { data: profile, isLoading } = useProfile();
   const { signOut } = useAuth();
+  const { token: pushToken, isSupported: pushSupported } = usePushNotifications();
 
   // Edit mode
   const [isEditing, setIsEditing] = useState(false);
@@ -321,6 +323,40 @@ export default function Profile() {
             )}
           </div>
         </div>
+
+        {/* Notifications Button - iOS only */}
+        {pushSupported && (
+          <div className="glass-card rounded-xl p-4 animate-slide-up" style={{ animationDelay: "50ms" }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center",
+                  pushToken ? "bg-green-500/10" : "bg-muted"
+                )}>
+                  {pushToken ? (
+                    <Bell className="w-5 h-5 text-green-500" strokeWidth={2} />
+                  ) : (
+                    <BellOff className="w-5 h-5 text-muted-foreground" strokeWidth={2} />
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">الإشعارات</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {pushToken ? "الإشعارات مفعلة" : "الإشعارات غير مفعلة"}
+                  </p>
+                </div>
+              </div>
+              {!pushToken && (
+                <button
+                  onClick={() => toast.info("يرجى السماح بالإشعارات من إعدادات الجهاز")}
+                  className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm font-medium ios-spring ios-press"
+                >
+                  تفعيل
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Sign Out Button */}
         <button

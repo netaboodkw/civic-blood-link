@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Megaphone } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -10,22 +10,21 @@ export function CreateRequestButton({ onClick }: CreateRequestButtonProps) {
   return (
     <motion.button
       onClick={onClick}
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2, duration: 0.4, ease: "easeOut" }}
-      whileTap={{ scale: 0.95 }}
-      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.97 }}
       className={cn(
-        "inline-flex items-center justify-center gap-2",
+        "w-full flex items-center justify-center gap-3",
         "bg-gradient-to-r from-primary to-primary/85 text-primary-foreground",
-        "rounded-xl px-4 py-2.5",
-        "font-medium text-sm",
-        "shadow-md glow-primary",
+        "rounded-2xl px-6 py-4",
+        "font-semibold text-[17px]",
+        "shadow-lg glow-primary",
         "transition-all duration-300"
       )}
     >
-      <Plus className="w-4 h-4" strokeWidth={2.5} />
-      <span>نشر إعلان</span>
+      <Megaphone className="w-5 h-5" strokeWidth={2} />
+      <span>نشر إعلان طلب تبرع</span>
     </motion.button>
   );
 }
