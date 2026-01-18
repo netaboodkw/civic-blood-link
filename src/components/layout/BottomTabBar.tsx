@@ -23,8 +23,8 @@ interface BottomTabBarProps {
 
 export function BottomTabBar({ activeTab, onTabChange }: BottomTabBarProps) {
   return (
-    <nav className="fixed bottom-4 left-4 right-4 z-50 glass-strong rounded-[28px] safe-area-bottom">
-      <div className="flex items-center justify-around h-[60px] max-w-lg mx-auto px-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-strong border-t border-border/50 pb-[env(safe-area-inset-bottom)]">
+      <div className="flex items-center justify-around h-[56px] max-w-lg mx-auto px-2">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           const Icon = tab.icon;
@@ -42,7 +42,7 @@ export function BottomTabBar({ activeTab, onTabChange }: BottomTabBarProps) {
               aria-current={isActive ? "page" : undefined}
             >
               <div className={cn(
-                "relative p-2 rounded-2xl transition-all duration-300",
+                "relative p-1.5 rounded-xl transition-all duration-300",
                 isActive && "bg-primary/15 glow-primary"
               )}>
                 <Icon
