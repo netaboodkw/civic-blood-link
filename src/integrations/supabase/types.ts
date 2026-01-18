@@ -45,6 +45,7 @@ export type Database = {
         Row: {
           blood_type: Database["public"]["Enums"]["blood_type"]
           city: string
+          click_count: number
           created_at: string
           expires_at: string | null
           file_number: string | null
@@ -61,6 +62,7 @@ export type Database = {
         Insert: {
           blood_type: Database["public"]["Enums"]["blood_type"]
           city: string
+          click_count?: number
           created_at?: string
           expires_at?: string | null
           file_number?: string | null
@@ -77,6 +79,7 @@ export type Database = {
         Update: {
           blood_type?: Database["public"]["Enums"]["blood_type"]
           city?: string
+          click_count?: number
           created_at?: string
           expires_at?: string | null
           file_number?: string | null

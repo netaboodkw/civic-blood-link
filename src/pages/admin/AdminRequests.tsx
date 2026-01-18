@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, CheckCircle, XCircle, Clock, Trash2, Loader2, FileText, MapPin, Droplet, Building2, AlertTriangle } from "lucide-react";
+import { MoreHorizontal, CheckCircle, XCircle, Clock, Trash2, Loader2, FileText, MapPin, Droplet, Building2, AlertTriangle, MousePointer } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useState } from "react";
@@ -120,7 +120,7 @@ export default function AdminRequests() {
                       <span>{request.city}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
                     <span className="text-xs text-muted-foreground">
                       {format(new Date(request.created_at), "dd MMM yyyy", { locale: ar })}
                     </span>
@@ -132,6 +132,11 @@ export default function AdminRequests() {
                         </span>
                       </>
                     )}
+                    <span className="text-xs text-muted-foreground">•</span>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <MousePointer className="w-3 h-3" />
+                      {(request as any).click_count || 0} نقرة
+                    </span>
                   </div>
                 </div>
 
