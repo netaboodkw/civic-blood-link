@@ -23,8 +23,8 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const { signIn, signUp } = useAuth();
   
-  // Get mode from URL params, default to login
-  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
+  // Get mode from URL params, default to signup
+  const initialMode = searchParams.get("mode") === "login" ? "login" : "signup";
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(0);
