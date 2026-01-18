@@ -145,7 +145,7 @@ export default function PublicRequests() {
 
   const handleGoToAuth = () => {
     setShowAuthAlert(false);
-    navigate("/auth?redirect=create-request");
+    navigate("/auth?redirect=create-request&mode=signup");
   };
 
   const getUrgencyColor = (level: string) => {
