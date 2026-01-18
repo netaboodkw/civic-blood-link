@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { Droplet, Mail, Lock, User, MapPin, ChevronLeft, Phone, Heart, Users, Bell, Check, ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Droplet, Mail, Lock, User, MapPin, ChevronLeft, Phone, Heart, Users, Bell, Check, ExternalLink, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -27,6 +28,8 @@ export default function Auth() {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(0);
+  const [emailExists, setEmailExists] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   // Form state
   const [email, setEmail] = useState("");
@@ -45,6 +48,44 @@ export default function Auth() {
       setStep(0);
     }
   }, [searchParams]);
+
+  // Reset email exists state when email changes
+  useEffect(() => {
+    setEmailExists(false);
+  }, [email]);
+
+  // Check if email already exists
+  const checkEmailExists = async (emailToCheck: string): Promise<boolean> => {
+    if (!emailToCheck || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToCheck)) {
+      return false;
+    }
+    
+    setCheckingEmail(true);
+    try {
+      // Try to sign up with a dummy password to check if email exists
+      // If the email exists, Supabase will return an error
+      const { error } = await supabase.auth.signInWithOtp({
+        email: emailToCheck,
+        options: {
+          shouldCreateUser: false,
+        }
+      });
+      
+      // If no error, user exists (OTP was sent)
+      // If error says "Signups not allowed", user doesn't exist
+      if (error?.message?.includes("Signups not allowed") || error?.message?.includes("User not found")) {
+        setCheckingEmail(false);
+        return false;
+      }
+      
+      // User exists
+      setCheckingEmail(false);
+      return true;
+    } catch (error) {
+      setCheckingEmail(false);
+      return false;
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,18 +138,29 @@ export default function Auth() {
       const redirect = searchParams.get("redirect");
       navigate(redirect ? `/${redirect}` : "/home");
     } catch (error: any) {
-      toast.error(error.message || "حدث خطأ أثناء التسجيل");
+      // Check if user already exists
+      if (error.message?.includes("already registered") || error.message?.includes("User already registered")) {
+        setEmailExists(true);
+        setStep(1); // Go back to email step
+        toast.error("البريد الإلكتروني مسجل مسبقاً");
+      } else {
+        toast.error(error.message || "حدث خطأ أثناء التسجيل");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (step === 0) {
       setStep(1);
     } else if (step === 1) {
       if (!fullName || !phone || !email || !password) {
         toast.error("يرجى ملء جميع الحقول");
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        toast.error("يرجى إدخال بريد إلكتروني صحيح");
         return;
       }
       if (!/^[0-9]{8}$/.test(phone)) {
@@ -119,6 +171,14 @@ export default function Auth() {
         toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
         return;
       }
+      
+      // Check if email exists
+      const exists = await checkEmailExists(email);
+      if (exists) {
+        setEmailExists(true);
+        return;
+      }
+      
       setStep(2);
     } else if (step === 2) {
       if (!bloodType || !city) {
@@ -126,6 +186,26 @@ export default function Auth() {
         return;
       }
       setStep(3);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("يرجى إدخال بريد إلكتروني صحيح");
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?mode=login`,
+      });
+      if (error) throw error;
+      toast.success("تم إرسال رابط استعادة كلمة المرور إلى بريدك الإلكتروني");
+    } catch (error: any) {
+      toast.error(error.message || "حدث خطأ في إرسال رابط الاستعادة");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -189,7 +269,7 @@ export default function Auth() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-left"
                 dir="ltr"
               />
             </div>
@@ -206,9 +286,19 @@ export default function Auth() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-left"
+                dir="ltr"
               />
             </div>
+
+            {/* Forgot Password */}
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="text-sm text-primary font-medium hover:underline"
+            >
+              نسيت كلمة المرور؟
+            </button>
 
             {/* Submit button */}
             <motion.button
@@ -274,7 +364,7 @@ export default function Auth() {
 
       {/* Back button */}
       <button
-        onClick={() => step > 0 ? setStep(step - 1) : navigate("/")}
+        onClick={() => step > 0 ? setStep(step - 1) : navigate("/requests")}
         className="absolute top-4 left-4 p-2.5 glass rounded-xl text-muted-foreground hover:text-foreground transition-colors z-10"
       >
         <ChevronLeft className="w-5 h-5 rotate-180" strokeWidth={2.5} />
@@ -332,7 +422,7 @@ export default function Auth() {
                   <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-2xl">
                     <feature.icon className="w-6 h-6 text-primary" strokeWidth={1.5} />
                   </div>
-                  <div>
+                  <div className="text-right">
                     <h3 className="font-bold text-foreground">{feature.title}</h3>
                     <p className="text-sm text-muted-foreground">{feature.desc}</p>
                   </div>
@@ -382,8 +472,8 @@ export default function Auth() {
             transition={{ duration: 0.3 }}
             className="flex-1 flex flex-col px-6 pt-8 pb-8"
           >
-            <h2 className="text-2xl font-bold gradient-text mb-2">البيانات الشخصية</h2>
-            <p className="text-muted-foreground mb-8">أدخل بياناتك للتسجيل</p>
+            <h2 className="text-2xl font-bold gradient-text mb-2 text-right">البيانات الشخصية</h2>
+            <p className="text-muted-foreground mb-8 text-right">أدخل بياناتك للتسجيل</p>
 
             <div className="space-y-4 mb-auto">
               {/* Full Name */}
@@ -396,7 +486,7 @@ export default function Auth() {
                   placeholder="الاسم الكامل"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-right"
                 />
               </div>
 
@@ -410,7 +500,7 @@ export default function Auth() {
                   placeholder="رقم الهاتف"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                  className="w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-20 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-20 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-left"
                   dir="ltr"
                 />
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
@@ -428,10 +518,44 @@ export default function Auth() {
                   placeholder="البريد الإلكتروني"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className={cn(
+                    "w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-left",
+                    emailExists && "ring-2 ring-destructive"
+                  )}
                   dir="ltr"
                 />
               </div>
+
+              {/* Email exists warning */}
+              {emailExists && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-start gap-3 glass-card rounded-2xl p-4 ring-2 ring-amber-500/30 bg-amber-500/5"
+                >
+                  <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" strokeWidth={2} />
+                  <div className="text-right">
+                    <p className="text-sm text-foreground font-medium">
+                      هذا البريد مسجل مسبقاً
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="text-sm text-primary font-semibold mt-1 hover:underline"
+                    >
+                      اضغط هنا لاستعادة كلمة المرور
+                    </button>
+                    <span className="text-sm text-muted-foreground mx-2">أو</span>
+                    <button
+                      type="button"
+                      onClick={() => setMode("login")}
+                      className="text-sm text-primary font-semibold hover:underline"
+                    >
+                      تسجيل الدخول
+                    </button>
+                  </div>
+                </motion.div>
+              )}
 
               {/* Password */}
               <div className="relative">
@@ -443,7 +567,8 @@ export default function Auth() {
                   placeholder="كلمة المرور (6 أحرف على الأقل)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="w-full glass-card border-0 rounded-2xl py-4 pr-16 pl-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-left"
+                  dir="ltr"
                 />
               </div>
             </div>
@@ -451,9 +576,10 @@ export default function Auth() {
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={nextStep}
-              className="w-full bg-gradient-to-r from-primary to-primary/85 text-primary-foreground rounded-2xl py-4 font-bold text-[17px] mt-6 shadow-lg glow-primary ios-spring"
+              disabled={checkingEmail}
+              className="w-full bg-gradient-to-r from-primary to-primary/85 text-primary-foreground rounded-2xl py-4 font-bold text-[17px] mt-6 shadow-lg glow-primary ios-spring disabled:opacity-50"
             >
-              التالي
+              {checkingEmail ? "جارٍ التحقق..." : "التالي"}
             </motion.button>
           </motion.div>
         )}
@@ -468,12 +594,12 @@ export default function Auth() {
             transition={{ duration: 0.3 }}
             className="flex-1 flex flex-col px-6 pt-8 pb-8"
           >
-            <h2 className="text-2xl font-bold gradient-text mb-2">فصيلة الدم والموقع</h2>
-            <p className="text-muted-foreground mb-8">اختر فصيلة دمك ومدينتك</p>
+            <h2 className="text-2xl font-bold gradient-text mb-2 text-right">فصيلة الدم والموقع</h2>
+            <p className="text-muted-foreground mb-8 text-right">اختر فصيلة دمك ومدينتك</p>
 
             {/* Blood Type */}
             <div className="mb-6">
-              <label className="text-sm font-semibold text-foreground mb-3 block">فصيلة الدم</label>
+              <label className="text-sm font-semibold text-foreground mb-3 block text-right">فصيلة الدم</label>
               <div className="grid grid-cols-4 gap-2">
                 {BLOOD_TYPES.map((type) => (
                   <motion.button
@@ -496,7 +622,7 @@ export default function Auth() {
 
             {/* City */}
             <div className="mb-auto">
-              <label className="text-sm font-semibold text-foreground mb-3 block">المحافظة</label>
+              <label className="text-sm font-semibold text-foreground mb-3 block text-right">المحافظة</label>
               <div className="grid grid-cols-2 gap-2">
                 {CITIES.map((c) => (
                   <motion.button
@@ -538,22 +664,22 @@ export default function Auth() {
             transition={{ duration: 0.3 }}
             className="flex-1 flex flex-col px-6 pt-8 pb-8"
           >
-            <h2 className="text-2xl font-bold gradient-text mb-2">تأكيد التسجيل</h2>
-            <p className="text-muted-foreground mb-8">راجع بياناتك ووافق على الشروط</p>
+            <h2 className="text-2xl font-bold gradient-text mb-2 text-right">تأكيد التسجيل</h2>
+            <p className="text-muted-foreground mb-8 text-right">راجع بياناتك ووافق على الشروط</p>
 
             {/* Summary */}
             <div className="glass-card rounded-2xl p-5 space-y-4 mb-6">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center flex-row-reverse">
                 <span className="text-muted-foreground">الاسم</span>
                 <span className="font-semibold text-foreground">{fullName}</span>
               </div>
               <div className="h-px bg-border/50" />
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center flex-row-reverse">
                 <span className="text-muted-foreground">فصيلة الدم</span>
                 <span className="font-bold text-primary text-xl">{bloodType}</span>
               </div>
               <div className="h-px bg-border/50" />
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center flex-row-reverse">
                 <span className="text-muted-foreground">المدينة</span>
                 <span className="font-semibold text-foreground">{city}</span>
               </div>
@@ -566,7 +692,7 @@ export default function Auth() {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setAcceptTerms(!acceptTerms)}
                 className={cn(
-                  "w-full flex items-center gap-4 glass-card rounded-2xl p-4 text-right transition-all ios-spring",
+                  "w-full flex items-center gap-4 glass-card rounded-2xl p-4 transition-all ios-spring",
                   acceptTerms && "ring-2 ring-primary/50"
                 )}
               >
@@ -576,19 +702,16 @@ export default function Auth() {
                 )}>
                   {acceptTerms && <Check className="w-4 h-4 text-primary-foreground" strokeWidth={3} />}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 text-right">
                   <span className="font-medium text-foreground">أوافق على </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate("/terms");
-                    }}
+                  <Link
+                    to="/terms"
+                    onClick={(e) => e.stopPropagation()}
                     className="text-primary font-semibold inline-flex items-center gap-1"
                   >
                     الشروط والأحكام
                     <ExternalLink className="w-3.5 h-3.5" strokeWidth={2.5} />
-                  </button>
+                  </Link>
                 </div>
               </motion.button>
             </div>
