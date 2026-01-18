@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Store token locally to persist across auth state changes
 const PUSH_TOKEN_KEY = 'nabdat_push_token';
+const PUSH_TOKEN_SAVED_KEY = 'nabdat_push_token_saved';
 
 export function usePushNotifications() {
   const [token, setToken] = useState<string | null>(() => {
@@ -104,22 +105,24 @@ export function usePushNotifications() {
       PushNotifications.addListener('registration', async (tokenData) => {
         console.log('🔔 [PUSH] ✅ Registration SUCCESS!');
         console.log('🔔 [PUSH] Token received:', tokenData.value);
-        console.log('🔔 [PUSH] Token length:', tokenData.value?.length);
+        
+        const existingToken = localStorage.getItem(PUSH_TOKEN_KEY);
+        const alreadySaved = localStorage.getItem(PUSH_TOKEN_SAVED_KEY);
         
         setToken(tokenData.value);
-        // Save token locally
         localStorage.setItem(PUSH_TOKEN_KEY, tokenData.value);
-        console.log('🔔 [PUSH] Token saved to localStorage');
         
-        // Try to save to database
-        console.log('🔔 [PUSH] Attempting to save to database...');
-        const saved = await savePushToken(tokenData.value);
-        console.log('🔔 [PUSH] Save to database result:', saved);
-        
-        if (saved) {
-          toast.success('تم تفعيل الإشعارات بنجاح!');
+        // Only show toast and save if token is new or different
+        if (existingToken !== tokenData.value || !alreadySaved) {
+          console.log('🔔 [PUSH] New token, saving to database...');
+          const saved = await savePushToken(tokenData.value);
+          
+          if (saved) {
+            localStorage.setItem(PUSH_TOKEN_SAVED_KEY, 'true');
+            toast.success('تم تفعيل الإشعارات بنجاح!');
+          }
         } else {
-          toast.info('تم الحصول على التوكن، سيتم حفظه عند تسجيل الدخول');
+          console.log('🔔 [PUSH] Token already saved, skipping notification');
         }
       });
 
