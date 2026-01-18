@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronRight, MapPin, Droplets, Clock, AlertCircle, Heart, Filter, X, Plus, Users, ChevronLeft } from "lucide-react";
+import { incrementClickCount } from "@/lib/clickTracking";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -412,7 +413,10 @@ export default function PublicRequests() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  onClick={() => setSelectedRequest(request)}
+                  onClick={() => {
+                    incrementClickCount(request.id);
+                    setSelectedRequest(request);
+                  }}
                   className="glass-card rounded-xl p-4 cursor-pointer active:scale-[0.98] transition-transform"
                 >
                   <div className="flex items-start gap-3">

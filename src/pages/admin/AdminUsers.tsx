@@ -7,14 +7,61 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Shield, ShieldOff, Loader2, User, MapPin, Droplet } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MoreHorizontal, Shield, ShieldOff, Loader2, User, MapPin, Droplet, Filter, X } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useState, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+
+const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const CITIES = ["مدينة الكويت", "حولي", "الفروانية", "الأحمدي", "الجهراء", "مبارك الكبير"];
+const ROLES = [
+  { value: "donor", label: "متبرع" },
+  { value: "requester", label: "طالب" },
+  { value: "both", label: "كلاهما" },
+];
 
 export default function AdminUsers() {
   const { users, userRoles, isLoading, addRole, removeRole, isAddingRole, isRemovingRole } = useAdminUsers();
+
+  // Filters
+  const [bloodTypeFilter, setBloodTypeFilter] = useState<string>("all");
+  const [cityFilter, setCityFilter] = useState<string>("all");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [adminFilter, setAdminFilter] = useState<string>("all");
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      if (bloodTypeFilter !== "all" && user.blood_type !== bloodTypeFilter) return false;
+      if (cityFilter !== "all" && user.city !== cityFilter) return false;
+      if (roleFilter !== "all" && user.role !== roleFilter) return false;
+      if (adminFilter !== "all") {
+        const roles = userRoles.filter((r) => r.user_id === user.id).map((r) => r.role);
+        if (adminFilter === "admin" && !roles.includes("admin")) return false;
+        if (adminFilter === "moderator" && !roles.includes("moderator")) return false;
+        if (adminFilter === "user" && (roles.includes("admin") || roles.includes("moderator"))) return false;
+      }
+      return true;
+    });
+  }, [users, userRoles, bloodTypeFilter, cityFilter, roleFilter, adminFilter]);
+
+  const hasActiveFilters = bloodTypeFilter !== "all" || cityFilter !== "all" || roleFilter !== "all" || adminFilter !== "all";
+
+  const clearFilters = () => {
+    setBloodTypeFilter("all");
+    setCityFilter("all");
+    setRoleFilter("all");
+    setAdminFilter("all");
+  };
 
   const getUserRoles = (userId: string) => {
     return userRoles.filter((r) => r.user_id === userId).map((r) => r.role);
@@ -28,6 +75,86 @@ export default function AdminUsers() {
 
   return (
     <AdminLayout title="إدارة المستخدمين">
+      {/* Filters */}
+      <div className="glass-card rounded-2xl p-4 mb-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Filter className="w-4 h-4 text-primary" />
+          <span className="font-medium text-sm">فلترة المستخدمين</span>
+          {hasActiveFilters && (
+            <Badge className="bg-primary/10 text-primary text-xs">
+              {[bloodTypeFilter, cityFilter, roleFilter, adminFilter].filter(f => f !== "all").length} فلتر
+            </Badge>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Select value={bloodTypeFilter} onValueChange={setBloodTypeFilter}>
+            <SelectTrigger className="glass text-sm h-9">
+              <SelectValue placeholder="فصيلة الدم" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">جميع الفصائل</SelectItem>
+              {BLOOD_TYPES.map((type) => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={cityFilter} onValueChange={setCityFilter}>
+            <SelectTrigger className="glass text-sm h-9">
+              <SelectValue placeholder="المدينة" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">جميع المدن</SelectItem>
+              {CITIES.map((city) => (
+                <SelectItem key={city} value={city}>{city}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="glass text-sm h-9">
+              <SelectValue placeholder="نوع الحساب" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">جميع الأنواع</SelectItem>
+              {ROLES.map((r) => (
+                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={adminFilter} onValueChange={setAdminFilter}>
+            <SelectTrigger className="glass text-sm h-9">
+              <SelectValue placeholder="الصلاحيات" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">جميع الصلاحيات</SelectItem>
+              <SelectItem value="admin">أدمن</SelectItem>
+              <SelectItem value="moderator">مشرف</SelectItem>
+              <SelectItem value="user">مستخدم عادي</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 w-full gap-2 text-muted-foreground"
+            onClick={clearFilters}
+          >
+            <X className="w-3 h-3" />
+            مسح الفلاتر
+          </Button>
+        )}
+      </div>
+
+      {/* Results count */}
+      {!isLoading && (
+        <p className="text-sm text-muted-foreground mb-3">
+          {filteredUsers.length} مستخدم {hasActiveFilters ? "(مفلتر)" : ""}
+        </p>
+      )}
+
       <div className="space-y-3">
         {isLoading ? (
           Array(5).fill(0).map((_, i) => (
@@ -41,13 +168,13 @@ export default function AdminUsers() {
               </div>
             </div>
           ))
-        ) : users.length === 0 ? (
+        ) : filteredUsers.length === 0 ? (
           <div className="glass-card rounded-2xl p-8 text-center">
             <User className="w-12 h-12 text-muted-foreground mx-auto mb-3" strokeWidth={1.5} />
-            <p className="text-muted-foreground">لا يوجد مستخدمين</p>
+            <p className="text-muted-foreground">{hasActiveFilters ? "لا يوجد مستخدمين مطابقين للفلتر" : "لا يوجد مستخدمين"}</p>
           </div>
         ) : (
-          users.map((user, index) => {
+          filteredUsers.map((user, index) => {
             const roles = getUserRoles(user.id);
             return (
               <motion.div
