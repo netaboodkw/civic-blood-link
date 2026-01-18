@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
 import localLogo from "@/assets/logo.png";
+import { GlassCard } from "@/components/ui/glass-card";
+import { IOSButton } from "@/components/ui/ios-button";
 
 const features = [
   {
@@ -78,20 +80,24 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 overflow-hidden" dir="rtl">
+    <div 
+      className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 overflow-x-hidden overflow-y-auto" 
+      dir="rtl"
+      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
       {/* Animated Background Elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 0.15, scale: 1 }}
+          animate={{ opacity: 0.12, scale: 1 }}
           transition={{ duration: 1.5, ease: "easeOut" }}
-          className="absolute top-[-20%] right-[-20%] w-[600px] h-[600px] bg-gradient-to-br from-primary/30 to-accent/20 rounded-full blur-3xl"
+          className="absolute top-[-20%] right-[-20%] w-[600px] h-[600px] bg-gradient-to-br from-primary/40 to-accent/30 rounded-full blur-3xl"
         />
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 0.1, scale: 1 }}
+          animate={{ opacity: 0.08, scale: 1 }}
           transition={{ duration: 1.5, delay: 0.3, ease: "easeOut" }}
-          className="absolute bottom-[-10%] left-[-20%] w-[500px] h-[500px] bg-gradient-to-tr from-accent/20 to-primary/30 rounded-full blur-3xl"
+          className="absolute bottom-[-10%] left-[-20%] w-[500px] h-[500px] bg-gradient-to-tr from-accent/30 to-primary/40 rounded-full blur-3xl"
         />
       </div>
 
@@ -118,9 +124,9 @@ export default function Landing() {
                 <motion.img 
                   src={localLogo} 
                   alt="نبضة دم" 
-                  className="w-auto h-32 object-contain"
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-auto h-32 object-contain drop-shadow-2xl"
+                  animate={{ scale: [1, 1.03, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                 />
               </motion.div>
               {/* Sparkle Effect */}
@@ -149,7 +155,7 @@ export default function Landing() {
             <span className="text-primary font-bold text-lg">كل نقطة دم تصنع الفرق</span>
           </motion.div>
 
-          {/* Stats Cards - Animated */}
+          {/* Stats Cards - Glass Style */}
           <motion.div 
             variants={itemVariants}
             className="grid grid-cols-3 gap-3 mb-8"
@@ -157,85 +163,66 @@ export default function Landing() {
             {stats.map((stat, index) => {
               const Icon = stat.icon;
               return (
-                <motion.div
+                <GlassCard
                   key={index}
+                  variant="default"
+                  interactive
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.4 + index * 0.1, type: "spring" }}
                   whileHover={{ scale: 1.05, y: -5 }}
-                  className="glass-card rounded-2xl p-4 text-center cursor-pointer"
+                  className="p-4 text-center"
                 >
-                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-2">
+                  <div className="w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl flex items-center justify-center mx-auto mb-2">
                     <Icon className="w-5 h-5 text-primary" />
                   </div>
-                  <div className="text-2xl font-bold gradient-text mb-1">
+                  <div className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-1">
                     {stat.value}
                   </div>
                   <div className="text-xs text-muted-foreground font-medium">
                     {stat.label}
                   </div>
-                </motion.div>
+                </GlassCard>
               );
             })}
           </motion.div>
 
-          {/* CTA Buttons - Premium Style */}
+          {/* CTA Buttons - iOS Style */}
           <motion.div 
             variants={itemVariants}
             className="flex flex-col gap-3"
           >
-            <motion.button
+            <IOSButton
               onClick={handleGetStarted}
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              className={cn(
-                "w-full flex items-center justify-center gap-3",
-                "bg-gradient-to-l from-primary to-primary/90",
-                "text-primary-foreground",
-                "rounded-2xl px-6 py-4",
-                "font-bold text-lg",
-                "shadow-lg shadow-primary/30",
-                "transition-all duration-300"
-              )}
+              variant="primary"
+              size="lg"
+              fullWidth
+              className="shadow-xl shadow-primary/30"
             >
               <span>{isAuthenticated ? "الذهاب للرئيسية" : "ابدأ الآن"}</span>
               <ChevronLeft className="w-5 h-5" />
-            </motion.button>
+            </IOSButton>
 
-            <motion.button
+            <IOSButton
               onClick={handleCreateRequest}
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              className={cn(
-                "w-full flex items-center justify-center gap-3",
-                "bg-gradient-to-l from-destructive to-destructive/90",
-                "text-destructive-foreground",
-                "rounded-2xl px-6 py-4",
-                "font-bold text-lg",
-                "shadow-lg shadow-destructive/30",
-                "transition-all duration-300"
-              )}
+              variant="destructive"
+              size="lg"
+              fullWidth
+              className="shadow-xl shadow-destructive/30"
             >
               <Plus className="w-5 h-5" />
               <span>أحتاج متبرع دم</span>
-            </motion.button>
+            </IOSButton>
 
-            <motion.button
+            <IOSButton
               onClick={handleViewRequests}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className={cn(
-                "w-full flex items-center justify-center gap-3",
-                "glass-card",
-                "text-foreground",
-                "rounded-2xl px-6 py-4",
-                "font-semibold text-base",
-                "transition-all duration-300"
-              )}
+              variant="secondary"
+              size="lg"
+              fullWidth
             >
               <Droplets className="w-5 h-5 text-primary" />
               <span>عرض طلبات الدم</span>
-            </motion.button>
+            </IOSButton>
           </motion.div>
         </motion.div>
       </section>
@@ -254,26 +241,28 @@ export default function Landing() {
             viewport={{ once: true }}
             className="text-2xl font-bold text-foreground text-center mb-8"
           >
-            لماذا <span className="gradient-text">نبضة دم</span>؟
+            لماذا <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">نبضة دم</span>؟
           </motion.h2>
 
           <div className="grid grid-cols-2 gap-4">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <motion.div
+                <GlassCard
                   key={index}
+                  variant="default"
+                  interactive
                   initial={{ opacity: 0, y: 30, scale: 0.9 }}
                   whileInView={{ opacity: 1, y: 0, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1, type: "spring" }}
                   whileHover={{ y: -5, scale: 1.02 }}
-                  className="glass-card rounded-2xl p-5 cursor-pointer group"
+                  className="p-5"
                 >
                   <div className={cn(
                     "w-12 h-12 rounded-xl flex items-center justify-center mb-4",
                     "bg-gradient-to-br", feature.color,
-                    "group-hover:scale-110 transition-transform duration-300"
+                    "shadow-lg transition-transform duration-300"
                   )}>
                     <Icon className="w-6 h-6 text-white" />
                   </div>
@@ -283,7 +272,7 @@ export default function Landing() {
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {feature.description}
                   </p>
-                </motion.div>
+                </GlassCard>
               );
             })}
           </div>
@@ -291,7 +280,7 @@ export default function Landing() {
       </section>
 
       {/* How it works - Timeline Style */}
-      <section className="px-4 py-10 bg-gradient-to-b from-card/50 to-transparent">
+      <section className="px-4 py-10 bg-gradient-to-b from-card/30 to-transparent">
         <motion.div 
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -304,7 +293,7 @@ export default function Landing() {
             viewport={{ once: true }}
             className="text-2xl font-bold text-foreground text-center mb-8"
           >
-            كيف <span className="gradient-text">يعمل</span>؟
+            كيف <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">يعمل</span>؟
           </motion.h2>
 
           <div className="relative">
@@ -333,13 +322,13 @@ export default function Landing() {
                     >
                       {item.step}
                     </motion.div>
-                    <div className="glass-card rounded-2xl p-4 flex-1">
+                    <GlassCard variant="default" className="flex-1 p-4">
                       <div className="flex items-center gap-2 mb-1">
                         <Icon className="w-4 h-4 text-primary" />
                         <h3 className="font-bold text-foreground">{item.title}</h3>
                       </div>
                       <p className="text-sm text-muted-foreground">{item.desc}</p>
-                    </div>
+                    </GlassCard>
                   </motion.div>
                 );
               })}
@@ -356,7 +345,11 @@ export default function Landing() {
           viewport={{ once: true }}
           className="max-w-lg mx-auto"
         >
-          <div className="glass-card rounded-3xl p-8 text-center relative overflow-hidden">
+          <GlassCard 
+            variant="strong" 
+            glow
+            className="rounded-3xl p-8 text-center relative overflow-hidden"
+          >
             {/* Background Decoration */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5" />
             
@@ -374,29 +367,22 @@ export default function Landing() {
                 كن جزءاً من فريق إنقاذ الأرواح
               </p>
 
-              <motion.button
+              <IOSButton
                 onClick={handleGetStarted}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={cn(
-                  "w-full flex items-center justify-center gap-3",
-                  "bg-gradient-to-l from-primary to-accent",
-                  "text-primary-foreground",
-                  "rounded-2xl px-6 py-4",
-                  "font-bold text-lg",
-                  "shadow-xl shadow-primary/40",
-                  "transition-all duration-300"
-                )}
+                variant="primary"
+                size="lg"
+                fullWidth
+                className="bg-gradient-to-l from-primary to-accent shadow-xl shadow-primary/40"
               >
                 <Heart className="w-5 h-5" fill="currentColor" />
                 <span>{isAuthenticated ? "الذهاب للرئيسية" : "سجّل الآن مجانًا"}</span>
-              </motion.button>
+              </IOSButton>
 
               <p className="text-xs text-muted-foreground mt-4">
                 ✓ التسجيل مجاني • ✓ بياناتك آمنة • ✓ دعم فني 24/7
               </p>
             </div>
-          </div>
+          </GlassCard>
         </motion.div>
       </section>
     </div>
