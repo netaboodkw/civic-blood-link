@@ -1,4 +1,5 @@
 import { MapPin, ChevronLeft, AlertCircle } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface NearbyRequestsCardProps {
@@ -19,7 +20,12 @@ export function NearbyRequestsCard({
   const displayCount = !isEligible ? 0 : (count ?? 0);
 
   return (
-    <div className="bg-card rounded-2xl overflow-hidden animate-slide-up" style={{ animationDelay: "100ms" }}>
+    <motion.div 
+      className="bg-card rounded-2xl overflow-hidden"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1, duration: 0.4, ease: "easeOut" }}
+    >
       {/* Card content */}
       <div className="p-5">
         {isLoading ? (
@@ -33,7 +39,10 @@ export function NearbyRequestsCard({
         ) : (
           <div className="flex items-center gap-4">
             {/* Count display */}
-            <div
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.3, ease: "easeOut" }}
               className={cn(
                 "flex items-center justify-center w-14 h-14 rounded-2xl",
                 displayCount > 0 
@@ -53,10 +62,15 @@ export function NearbyRequestsCard({
                   {error ? "—" : displayCount}
                 </span>
               )}
-            </div>
+            </motion.div>
 
             {/* Info */}
-            <div className="flex-1">
+            <motion.div 
+              className="flex-1"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.25, duration: 0.3 }}
+            >
               <h3 className="text-base font-semibold text-foreground mb-0.5">
                 طلبات قريبة
               </h3>
@@ -70,26 +84,27 @@ export function NearbyRequestsCard({
                   لن تظهر طلبات حتى تصبح مؤهل
                 </p>
               )}
-            </div>
+            </motion.div>
           </div>
         )}
 
         {/* CTA Button */}
-        <button
+        <motion.button
           onClick={onViewRequests}
           disabled={isLoading || (!isEligible && displayCount === 0)}
+          whileTap={{ scale: 0.98 }}
           className={cn(
             "mt-4 w-full flex items-center justify-between",
             "bg-muted hover:bg-muted/80 rounded-xl px-4 py-3",
             "text-foreground font-medium text-[15px]",
-            "transition-all duration-200 ios-spring active:scale-[0.98]",
+            "transition-colors duration-200",
             "disabled:opacity-50 disabled:cursor-not-allowed"
           )}
         >
           <span>عرض الطلبات</span>
           <ChevronLeft className="w-5 h-5 text-muted-foreground" />
-        </button>
+        </motion.button>
       </div>
-    </div>
+    </motion.div>
   );
 }
