@@ -115,12 +115,12 @@ export default function Landing() {
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="w-28 h-28 rounded-[2.5rem] overflow-hidden shadow-2xl ring-4 ring-primary/20"
+                  className="rounded-[2rem] overflow-visible"
                 >
                   <img 
                     src={settings.app_logo_url} 
                     alt="نبضة دم" 
-                    className="w-full h-full object-contain bg-white"
+                    className="w-auto h-32 object-contain"
                   />
                 </motion.div>
               ) : (
@@ -156,16 +156,6 @@ export default function Landing() {
               </motion.div>
             </div>
           </motion.div>
-
-          {/* Title with Gradient */}
-          <motion.h1 
-            variants={itemVariants}
-            className="text-4xl font-extrabold mb-3"
-          >
-            <span className="bg-gradient-to-l from-primary via-primary to-accent bg-clip-text text-transparent">
-              نبضة دم
-            </span>
-          </motion.h1>
 
           <motion.p 
             variants={itemVariants}
