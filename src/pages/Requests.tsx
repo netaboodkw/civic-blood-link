@@ -7,6 +7,7 @@ import { useMyRequests, type BloodRequest } from "@/hooks/useMyRequests";
 import { RequestCard } from "@/components/requests/RequestCard";
 import { EditRequestDialog } from "@/components/requests/EditRequestDialog";
 import { CancelRequestDialog } from "@/components/requests/CancelRequestDialog";
+import { RequestDetailsDialog } from "@/components/requests/RequestDetailsDialog";
 import { Button } from "@/components/ui/button";
 
 export default function Requests() {
@@ -16,6 +17,7 @@ export default function Requests() {
   
   const [editingRequest, setEditingRequest] = useState<BloodRequest | null>(null);
   const [cancellingRequestId, setCancellingRequestId] = useState<string | null>(null);
+  const [viewingRequest, setViewingRequest] = useState<BloodRequest | null>(null);
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
@@ -40,6 +42,10 @@ export default function Requests() {
 
   const handleCancel = (requestId: string) => {
     setCancellingRequestId(requestId);
+  };
+
+  const handleView = (request: BloodRequest) => {
+    setViewingRequest(request);
   };
 
   return (
@@ -89,12 +95,17 @@ export default function Requests() {
         ) : (
           <div className="space-y-3">
             {requests.map((request) => (
-              <RequestCard
+              <div
                 key={request.id}
-                request={request}
-                onEdit={handleEdit}
-                onCancel={handleCancel}
-              />
+                onClick={() => handleView(request)}
+                className="cursor-pointer transition-transform active:scale-[0.98]"
+              >
+                <RequestCard
+                  request={request}
+                  onEdit={handleEdit}
+                  onCancel={handleCancel}
+                />
+              </div>
             ))}
           </div>
         )}
@@ -112,6 +123,16 @@ export default function Requests() {
         requestId={cancellingRequestId}
         open={!!cancellingRequestId}
         onOpenChange={(open) => !open && setCancellingRequestId(null)}
+      />
+
+      {/* Details Dialog */}
+      <RequestDetailsDialog
+        request={viewingRequest}
+        open={!!viewingRequest}
+        onOpenChange={(open) => !open && setViewingRequest(null)}
+        showActions={true}
+        onEdit={handleEdit}
+        onCancel={handleCancel}
       />
     </MobileLayout>
   );
