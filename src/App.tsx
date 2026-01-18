@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import CreateRequest from "./pages/CreateRequest";
 import NotFound from "./pages/NotFound";
 import Terms from "./pages/Terms";
+import AdminAuth from "./pages/admin/AdminAuth";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminRequests from "./pages/admin/AdminRequests";
@@ -82,13 +83,14 @@ function AppContent() {
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/create-request" element={<ProtectedRoute><CreateRequest /></ProtectedRoute>} />
           
-          {/* Admin routes */}
-          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
-          <Route path="/admin/requests" element={<ProtectedRoute><AdminRequests /></ProtectedRoute>} />
-          <Route path="/admin/donations" element={<ProtectedRoute><AdminDonations /></ProtectedRoute>} />
-          <Route path="/admin/notifications" element={<ProtectedRoute><AdminNotifications /></ProtectedRoute>} />
-          <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
+          {/* Admin routes - completely separate from user auth */}
+          <Route path="/admin/login" element={<AdminAuth />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/requests" element={<AdminRequests />} />
+          <Route path="/admin/donations" element={<AdminDonations />} />
+          <Route path="/admin/notifications" element={<AdminNotifications />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
