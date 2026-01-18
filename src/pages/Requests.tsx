@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { incrementClickCount } from "@/lib/clickTracking";
 
 type BloodType = "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
 
@@ -278,7 +279,10 @@ export default function Requests() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.03 }}
-                  onClick={() => setViewingRequest(request)}
+                  onClick={() => {
+                    incrementClickCount(request.id);
+                    setViewingRequest(request);
+                  }}
                   className={cn(
                     "glass-card rounded-2xl p-4 cursor-pointer active:scale-[0.98] transition-transform",
                     request.urgency_level === "urgent" && "ring-2 ring-red-500/30"
@@ -324,16 +328,16 @@ export default function Requests() {
           )}
         </div>
 
-        {/* Floating Action Button */}
+        {/* Floating Action Button - Smaller */}
         <motion.button
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate("/create-request")}
-          className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-primary/85 text-primary-foreground rounded-full px-6 py-3.5 font-bold shadow-lg glow-primary flex items-center gap-2 z-10"
+          className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground rounded-full px-4 py-2.5 text-sm font-medium shadow-lg flex items-center gap-1.5 z-10"
         >
-          <Plus className="w-5 h-5" strokeWidth={2.5} />
-          نشر إعلان طلب تبرع
+          <Plus className="w-4 h-4" strokeWidth={2.5} />
+          نشر طلب
         </motion.button>
       </div>
 

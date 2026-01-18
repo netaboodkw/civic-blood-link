@@ -14,6 +14,8 @@ import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import type { TabType } from "@/components/layout/BottomTabBar";
 import { Badge } from "@/components/ui/badge";
+import { RequestDetailsDialog } from "@/components/requests/RequestDetailsDialog";
+import { incrementClickCount } from "@/lib/clickTracking";
 
 type BloodType = "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
 
@@ -32,6 +34,7 @@ const CAN_DONATE_TO: Record<BloodType, BloodType[]> = {
 export default function Home() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>("home");
+  const [viewingRequest, setViewingRequest] = useState<any>(null);
 
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { 
@@ -193,8 +196,12 @@ export default function Home() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 + index * 0.05 }}
+                  onClick={() => {
+                    incrementClickCount(request.id);
+                    setViewingRequest(request);
+                  }}
                   className={cn(
-                    "glass rounded-xl p-3 flex items-center gap-3",
+                    "glass rounded-xl p-3 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform",
                     request.urgency_level === "urgent" && "ring-1 ring-red-500/30"
                   )}
                 >
@@ -211,7 +218,7 @@ export default function Home() {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {request.units_needed} وحدات • {format(new Date(request.created_at), "dd MMM", { locale: ar })}
+                      {request.city} • {format(new Date(request.created_at), "dd MMM", { locale: ar })}
                     </p>
                   </div>
                 </motion.div>
@@ -230,6 +237,14 @@ export default function Home() {
         {/* Create Request Button */}
         <CreateRequestButton onClick={handleCreateRequest} />
       </div>
+
+      {/* Request Details Dialog */}
+      <RequestDetailsDialog
+        request={viewingRequest}
+        open={!!viewingRequest}
+        onOpenChange={(open) => !open && setViewingRequest(null)}
+        showActions={false}
+      />
     </MobileLayout>
   );
 }
