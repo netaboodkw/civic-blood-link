@@ -82,7 +82,9 @@ async function sendPushToDevice(
   data?: Record<string, string>
 ): Promise<{ success: boolean; error?: string }> {
   const bundleId = 'com.nabdatdam.app';
-  const apnsUrl = `https://api.push.apple.com/3/device/${deviceToken}`;
+  // Use sandbox for development, production for release
+  // Change to api.push.apple.com when publishing to App Store
+  const apnsUrl = `https://api.sandbox.push.apple.com/3/device/${deviceToken}`;
 
   const payload = {
     aps: {
