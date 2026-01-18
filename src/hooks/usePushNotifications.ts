@@ -6,7 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Store token locally to persist across auth state changes
 const PUSH_TOKEN_KEY = 'nabdat_push_token';
-const PUSH_TOKEN_SAVED_KEY = 'nabdat_push_token_saved';
 
 export function usePushNotifications() {
   const [token, setToken] = useState<string | null>(() => {
@@ -107,22 +106,24 @@ export function usePushNotifications() {
         console.log('🔔 [PUSH] Token received:', tokenData.value);
         
         const existingToken = localStorage.getItem(PUSH_TOKEN_KEY);
-        const alreadySaved = localStorage.getItem(PUSH_TOKEN_SAVED_KEY);
+        const isNewToken = !existingToken || existingToken !== tokenData.value;
         
+        // Always update token in state and localStorage
         setToken(tokenData.value);
         localStorage.setItem(PUSH_TOKEN_KEY, tokenData.value);
         
-        // Only show toast and save if token is new or different
-        if (existingToken !== tokenData.value || !alreadySaved) {
-          console.log('🔔 [PUSH] New token, saving to database...');
+        // Only show toast if this is a genuinely NEW token (first time or changed)
+        if (isNewToken) {
+          console.log('🔔 [PUSH] New token detected, saving to database...');
           const saved = await savePushToken(tokenData.value);
           
           if (saved) {
-            localStorage.setItem(PUSH_TOKEN_SAVED_KEY, 'true');
             toast.success('تم تفعيل الإشعارات بنجاح!');
           }
         } else {
-          console.log('🔔 [PUSH] Token already saved, skipping notification');
+          console.log('🔔 [PUSH] Same token, skipping notification');
+          // Still try to save silently in case it wasn't saved before
+          savePushToken(tokenData.value);
         }
       });
 
@@ -170,16 +171,11 @@ export function usePushNotifications() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         const storedToken = localStorage.getItem(PUSH_TOKEN_KEY);
-        const alreadySaved = localStorage.getItem(PUSH_TOKEN_SAVED_KEY);
         
-        // Only save if token exists and hasn't been saved yet
-        if (storedToken && !alreadySaved) {
-          console.log('User signed in, saving stored push token...');
-          const saved = await savePushToken(storedToken);
-          if (saved) {
-            localStorage.setItem(PUSH_TOKEN_SAVED_KEY, 'true');
-            // Don't show toast here - user already knows they enabled notifications
-          }
+        // Save token silently without showing toast (user already saw it when registering)
+        if (storedToken) {
+          console.log('User signed in, saving stored push token silently...');
+          await savePushToken(storedToken);
         }
       }
     });
