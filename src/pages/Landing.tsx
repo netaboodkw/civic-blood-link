@@ -2,8 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { Heart, MapPin, Bell, Users, Shield, Clock, ChevronLeft, Droplets, Plus, Activity, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { useAppSettings } from "@/hooks/useAppSettings";
 import { motion } from "framer-motion";
+import localLogo from "@/assets/logo.png";
 
 const features = [
   {
@@ -56,7 +56,6 @@ const itemVariants = {
 export default function Landing() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { data: settings } = useAppSettings();
 
   const handleGetStarted = () => {
     if (isAuthenticated) {
@@ -110,44 +109,20 @@ export default function Landing() {
             className="flex items-center justify-center mb-6"
           >
             <div className="relative">
-              {settings?.app_logo_url ? (
-                <motion.div
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="rounded-[2rem] overflow-visible"
-                >
-                  <motion.img 
-                    src={settings.app_logo_url} 
-                    alt="نبضة دم" 
-                    className="w-auto h-32 object-contain"
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="relative"
-                >
-                  <div className="w-28 h-28 bg-gradient-to-br from-primary via-primary to-accent rounded-[2.5rem] flex items-center justify-center shadow-2xl ring-4 ring-primary/20">
-                    <Heart className="w-14 h-14 text-primary-foreground drop-shadow-lg" fill="currentColor" />
-                  </div>
-                  {/* Animated Rings */}
-                  <motion.div
-                    animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute inset-0 rounded-[2.5rem] border-2 border-primary/40"
-                  />
-                  <motion.div
-                    animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0, 0.3] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                    className="absolute inset-0 rounded-[2.5rem] border-2 border-primary/30"
-                  />
-                </motion.div>
-              )}
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                className="rounded-[2rem] overflow-visible"
+              >
+                <motion.img 
+                  src={localLogo} 
+                  alt="نبضة دم" 
+                  className="w-auto h-32 object-contain"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                />
+              </motion.div>
               {/* Sparkle Effect */}
               <motion.div
                 animate={{ rotate: 360 }}
