@@ -6,7 +6,7 @@ import { MobileLayout } from "@/components/layout/MobileLayout";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import { User, MapPin, Droplets, LogOut, Phone, Edit3, Check, X, Bell, BellOff } from "lucide-react";
+import { User, MapPin, Droplets, LogOut, Phone, Edit3, Check, X, Bell, BellOff, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { TabType } from "@/components/layout/BottomTabBar";
@@ -25,7 +25,8 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState<TabType>("profile");
   const { data: profile, isLoading } = useProfile();
   const { signOut } = useAuth();
-  const { token: pushToken, isSupported: pushSupported } = usePushNotifications();
+  const { token: pushToken, isSupported: pushSupported, savePushToken } = usePushNotifications();
+  const [isRefreshingToken, setIsRefreshingToken] = useState(false);
 
   // Edit mode
   const [isEditing, setIsEditing] = useState(false);
@@ -346,14 +347,40 @@ export default function Profile() {
                   </p>
                 </div>
               </div>
-              {!pushToken && (
-                <button
-                  onClick={() => toast.info("يرجى السماح بالإشعارات من إعدادات الجهاز")}
-                  className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm font-medium ios-spring ios-press"
-                >
-                  تفعيل
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {pushToken && (
+                  <button
+                    onClick={async () => {
+                      setIsRefreshingToken(true);
+                      try {
+                        const saved = await savePushToken(pushToken);
+                        if (saved) {
+                          toast.success("تم تحديث التوكن بنجاح");
+                        } else {
+                          toast.error("فشل تحديث التوكن");
+                        }
+                      } catch (error) {
+                        toast.error("حدث خطأ أثناء التحديث");
+                      } finally {
+                        setIsRefreshingToken(false);
+                      }
+                    }}
+                    disabled={isRefreshingToken}
+                    className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm font-medium ios-spring ios-press disabled:opacity-50 flex items-center gap-2"
+                  >
+                    <RefreshCw className={cn("w-4 h-4", isRefreshingToken && "animate-spin")} />
+                    <span>تحديث</span>
+                  </button>
+                )}
+                {!pushToken && (
+                  <button
+                    onClick={() => toast.info("يرجى السماح بالإشعارات من إعدادات الجهاز")}
+                    className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm font-medium ios-spring ios-press"
+                  >
+                    تفعيل
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
