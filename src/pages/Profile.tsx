@@ -25,7 +25,7 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState<TabType>("profile");
   const { data: profile, isLoading } = useProfile();
   const { signOut } = useAuth();
-  const { token: pushToken, isSupported: pushSupported, savePushToken } = usePushNotifications();
+  const { token: pushToken, isSupported: pushSupported, savePushToken, requestPushPermission, isRegistering } = usePushNotifications();
   const [isRefreshingToken, setIsRefreshingToken] = useState(false);
 
   // Edit mode
@@ -374,10 +374,16 @@ export default function Profile() {
                 )}
                 {!pushToken && (
                   <button
-                    onClick={() => toast.info("يرجى السماح بالإشعارات من إعدادات الجهاز")}
-                    className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm font-medium ios-spring ios-press"
+                    onClick={requestPushPermission}
+                    disabled={isRegistering}
+                    className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm font-medium ios-spring ios-press disabled:opacity-50 flex items-center gap-2"
                   >
-                    تفعيل
+                    {isRegistering ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Bell className="w-4 h-4" />
+                    )}
+                    <span>{isRegistering ? 'جاري التفعيل...' : 'تفعيل'}</span>
                   </button>
                 )}
               </div>

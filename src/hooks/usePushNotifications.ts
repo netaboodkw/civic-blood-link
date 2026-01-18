@@ -16,6 +16,7 @@ export function usePushNotifications() {
     return null;
   });
   const [isSupported, setIsSupported] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   // Save push token to user profile
   const savePushToken = useCallback(async (pushToken: string) => {
@@ -44,6 +45,38 @@ export function usePushNotifications() {
     }
   }, []);
 
+  // Request and register for push notifications
+  const requestPushPermission = useCallback(async () => {
+    if (!Capacitor.isNativePlatform()) {
+      toast.error('الإشعارات متاحة فقط على التطبيق');
+      return false;
+    }
+
+    setIsRegistering(true);
+    
+    try {
+      // Request permission
+      const permStatus = await PushNotifications.requestPermissions();
+      console.log('Permission status:', permStatus);
+      
+      if (permStatus.receive === 'granted') {
+        // Register for push notifications
+        await PushNotifications.register();
+        toast.success('جاري تسجيل الإشعارات...');
+        return true;
+      } else {
+        toast.error('يرجى السماح بالإشعارات من إعدادات الجهاز');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error requesting push permission:', error);
+      toast.error('حدث خطأ أثناء تفعيل الإشعارات');
+      return false;
+    } finally {
+      setIsRegistering(false);
+    }
+  }, []);
+
   // Initialize push notifications
   useEffect(() => {
     const initPushNotifications = async () => {
@@ -55,33 +88,24 @@ export function usePushNotifications() {
 
       setIsSupported(true);
 
-      // Request permission
-      const permStatus = await PushNotifications.requestPermissions();
-      
-      if (permStatus.receive === 'granted') {
-        // Register for push notifications
-        await PushNotifications.register();
-      } else {
-        console.log('Push notification permission denied');
-        return;
-      }
-
-      // Listen for registration success
+      // Set up listeners first
       PushNotifications.addListener('registration', async (tokenData) => {
         console.log('Push registration success, token: ' + tokenData.value);
         setToken(tokenData.value);
         // Save token locally
         localStorage.setItem(PUSH_TOKEN_KEY, tokenData.value);
         // Try to save to database
-        await savePushToken(tokenData.value);
+        const saved = await savePushToken(tokenData.value);
+        if (saved) {
+          toast.success('تم تفعيل الإشعارات بنجاح!');
+        }
       });
 
-      // Listen for registration errors
       PushNotifications.addListener('registrationError', (error) => {
         console.error('Error on registration: ' + JSON.stringify(error));
+        toast.error('فشل تسجيل الإشعارات: ' + JSON.stringify(error));
       });
 
-      // Listen for push notifications received
       PushNotifications.addListener('pushNotificationReceived', (notification) => {
         console.log('Push received: ' + JSON.stringify(notification));
         toast(notification.title || 'إشعار جديد', {
@@ -89,11 +113,18 @@ export function usePushNotifications() {
         });
       });
 
-      // Listen for push notification action performed
       PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
         console.log('Push action performed: ' + JSON.stringify(notification));
-        // Handle notification tap - navigate to relevant screen
       });
+
+      // Check current permission status
+      const permStatus = await PushNotifications.checkPermissions();
+      console.log('Current permission status:', permStatus);
+      
+      if (permStatus.receive === 'granted') {
+        // Already have permission, register
+        await PushNotifications.register();
+      }
     };
 
     initPushNotifications();
@@ -108,12 +139,10 @@ export function usePushNotifications() {
   // Listen for auth state changes to save token when user logs in
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // When user signs in, save the push token if we have one
       if (event === 'SIGNED_IN' && session?.user) {
         const storedToken = localStorage.getItem(PUSH_TOKEN_KEY);
         if (storedToken) {
           console.log('User signed in, saving stored push token...');
-          // Use setTimeout to avoid deadlock with Supabase auth
           setTimeout(() => {
             savePushToken(storedToken);
           }, 0);
@@ -126,5 +155,5 @@ export function usePushNotifications() {
     };
   }, [savePushToken]);
 
-  return { token, isSupported, savePushToken };
+  return { token, isSupported, isRegistering, savePushToken, requestPushPermission };
 }
