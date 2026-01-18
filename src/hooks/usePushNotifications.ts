@@ -107,13 +107,16 @@ export function usePushNotifications() {
 
   // Listen for auth state changes to save token when user logs in
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // When user signs in, save the push token if we have one
       if (event === 'SIGNED_IN' && session?.user) {
         const storedToken = localStorage.getItem(PUSH_TOKEN_KEY);
         if (storedToken) {
           console.log('User signed in, saving stored push token...');
-          await savePushToken(storedToken);
+          // Use setTimeout to avoid deadlock with Supabase auth
+          setTimeout(() => {
+            savePushToken(storedToken);
+          }, 0);
         }
       }
     });
