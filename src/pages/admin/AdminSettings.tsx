@@ -1,78 +1,62 @@
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings, Shield, Bell, Database } from "lucide-react";
+import { motion } from "framer-motion";
+
+const settingsCards = [
+  {
+    icon: Shield,
+    title: "إعدادات الأمان",
+    description: "إدارة إعدادات الأمان والصلاحيات",
+    content: "يمكنك إدارة صلاحيات المستخدمين من صفحة المستخدمين",
+    color: "bg-blue-500/10",
+  },
+  {
+    icon: Bell,
+    title: "إعدادات الإشعارات",
+    description: "إدارة إعدادات الإشعارات للتطبيق",
+    content: "قريباً: إعدادات الإشعارات",
+    color: "bg-amber-500/10",
+  },
+  {
+    icon: Database,
+    title: "إعدادات قاعدة البيانات",
+    description: "عرض معلومات قاعدة البيانات",
+    content: "قاعدة البيانات متصلة وتعمل بشكل سليم",
+    color: "bg-green-500/10",
+  },
+  {
+    icon: Settings,
+    title: "إعدادات عامة",
+    description: "إعدادات التطبيق العامة",
+    content: "قريباً: المزيد من الإعدادات",
+    color: "bg-purple-500/10",
+  },
+];
 
 export default function AdminSettings() {
   return (
     <AdminLayout title="الإعدادات">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              <CardTitle>إعدادات الأمان</CardTitle>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {settingsCards.map((card, index) => (
+          <motion.div
+            key={card.title}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="glass-card rounded-2xl p-5 hover:bg-primary/5 transition-colors cursor-pointer"
+          >
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 glass rounded-xl flex items-center justify-center ${card.color} shrink-0`}>
+                <card.icon className="h-6 w-6 text-primary" strokeWidth={1.5} />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-foreground mb-1">{card.title}</h3>
+                <p className="text-sm text-muted-foreground mb-3">{card.description}</p>
+                <p className="text-sm text-muted-foreground/80">{card.content}</p>
+              </div>
             </div>
-            <CardDescription>
-              إدارة إعدادات الأمان والصلاحيات
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              يمكنك إدارة صلاحيات المستخدمين من صفحة المستخدمين
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Bell className="h-5 w-5 text-primary" />
-              <CardTitle>إعدادات الإشعارات</CardTitle>
-            </div>
-            <CardDescription>
-              إدارة إعدادات الإشعارات للتطبيق
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              قريباً: إعدادات الإشعارات
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Database className="h-5 w-5 text-primary" />
-              <CardTitle>إعدادات قاعدة البيانات</CardTitle>
-            </div>
-            <CardDescription>
-              عرض معلومات قاعدة البيانات
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              قاعدة البيانات متصلة وتعمل بشكل سليم
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Settings className="h-5 w-5 text-primary" />
-              <CardTitle>إعدادات عامة</CardTitle>
-            </div>
-            <CardDescription>
-              إعدادات التطبيق العامة
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              قريباً: المزيد من الإعدادات
-            </p>
-          </CardContent>
-        </Card>
+          </motion.div>
+        ))}
       </div>
     </AdminLayout>
   );

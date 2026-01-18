@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   Sidebar,
   SidebarContent,
@@ -21,7 +22,6 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -46,29 +46,36 @@ export function AdminSidebar() {
   };
 
   return (
-    <Sidebar className="border-l border-border" side="right">
-      <SidebarHeader className="p-4 border-b border-border">
-        <div className="flex items-center gap-2">
-          <Droplet className="h-6 w-6 text-primary" />
-          <span className="font-bold text-lg">لوحة الأدمن</span>
+    <Sidebar className="border-l border-border/50 bg-background/80 backdrop-blur-xl" side="right">
+      <SidebarHeader className="p-4 border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 glass-card rounded-xl flex items-center justify-center glow-primary">
+            <Droplet className="h-5 w-5 text-primary" fill="currentColor" strokeWidth={1.5} />
+          </div>
+          <div>
+            <span className="font-bold text-foreground">لوحة الأدمن</span>
+            <p className="text-xs text-muted-foreground">نبضة دم</p>
+          </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="p-2">
         <SidebarGroup>
-          <SidebarGroupLabel>القائمة الرئيسية</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-muted-foreground text-xs px-3 py-2">القائمة الرئيسية</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
+            <SidebarMenu className="space-y-1">
+              {menuItems.map((item, index) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 
                       to={item.url} 
                       end={item.url === "/admin"}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/50 transition-colors"
-                      activeClassName="bg-primary/10 text-primary font-medium"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ios-spring hover:bg-primary/5"
+                      activeClassName="glass-card bg-primary/10 text-primary font-medium glow-primary"
                     >
-                      <item.icon className="h-5 w-5" />
+                      <div className="w-8 h-8 glass rounded-lg flex items-center justify-center">
+                        <item.icon className="h-4 w-4" strokeWidth={2} />
+                      </div>
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -79,23 +86,23 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t border-border space-y-2">
-        <Button 
-          variant="outline" 
-          className="w-full justify-start gap-2"
+      <SidebarFooter className="p-4 border-t border-border/50 space-y-2">
+        <motion.button
+          whileTap={{ scale: 0.97 }}
           onClick={() => navigate("/home")}
+          className="w-full flex items-center justify-start gap-3 glass-card rounded-xl px-4 py-3 text-foreground font-medium ios-spring hover:bg-primary/5"
         >
-          <Home className="h-4 w-4" />
+          <Home className="h-4 w-4" strokeWidth={2} />
           العودة للتطبيق
-        </Button>
-        <Button 
-          variant="destructive" 
-          className="w-full justify-start gap-2"
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
           onClick={handleLogout}
+          className="w-full flex items-center justify-start gap-3 bg-destructive/10 rounded-xl px-4 py-3 text-destructive font-medium ios-spring hover:bg-destructive/20"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-4 w-4" strokeWidth={2} />
           تسجيل الخروج
-        </Button>
+        </motion.button>
       </SidebarFooter>
     </Sidebar>
   );
