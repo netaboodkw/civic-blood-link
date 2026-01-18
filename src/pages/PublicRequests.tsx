@@ -2,9 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight, MapPin, Droplets, Clock, AlertCircle, Heart, Filter, X } from "lucide-react";
+import { ChevronRight, MapPin, Droplets, Clock, AlertCircle, Heart, Filter, X, Plus, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
@@ -37,17 +38,34 @@ const URGENCY_LEVELS = [
   { value: "urgent", label: "طارئ" },
 ];
 
+type BloodType = "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
+
+// Blood type compatibility chart - who can receive from whom
+const COMPATIBLE_DONORS: Record<BloodType, BloodType[]> = {
+  "A+": ["A+", "A-", "O+", "O-"],
+  "A-": ["A-", "O-"],
+  "B+": ["B+", "B-", "O+", "O-"],
+  "B-": ["B-", "O-"],
+  "AB+": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+  "AB-": ["A-", "B-", "AB-", "O-"],
+  "O+": ["O+", "O-"],
+  "O-": ["O-"],
+};
+
 export default function PublicRequests() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { data: profile } = useProfile();
   
-  const [bloodTypeFilter, setBloodTypeFilter] = useState<string>("all");
+  const [showCompatibleOnly, setShowCompatibleOnly] = useState(true);
   const [cityFilter, setCityFilter] = useState<string>("all");
   const [urgencyFilter, setUrgencyFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
 
+  const userBloodType = profile?.blood_type;
+
   const { data: requests, isLoading, error } = useQuery({
-    queryKey: ["public-requests", bloodTypeFilter, cityFilter, urgencyFilter],
+    queryKey: ["public-requests", showCompatibleOnly, userBloodType, cityFilter, urgencyFilter],
     queryFn: async (): Promise<BloodRequest[]> => {
       let query = supabase
         .from("blood_requests")
@@ -56,9 +74,14 @@ export default function PublicRequests() {
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (bloodTypeFilter !== "all") {
-        query = query.eq("blood_type", bloodTypeFilter as "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-");
+      // Filter by compatible blood types if user is logged in and has blood type
+      if (showCompatibleOnly && userBloodType) {
+        const compatibleTypes = COMPATIBLE_DONORS[userBloodType] || [];
+        if (compatibleTypes.length > 0) {
+          query = query.in("blood_type", compatibleTypes);
+        }
       }
+
       if (cityFilter !== "all") {
         query = query.eq("city", cityFilter);
       }
@@ -72,11 +95,11 @@ export default function PublicRequests() {
     },
   });
 
-  const handleRespond = () => {
+  const handleCreateRequest = () => {
     if (isAuthenticated) {
-      navigate("/home");
+      navigate("/create-request");
     } else {
-      navigate("/auth?redirect=donate");
+      navigate("/auth?redirect=create-request");
     }
   };
 
@@ -102,15 +125,14 @@ export default function PublicRequests() {
     }
   };
 
-  const hasActiveFilters = bloodTypeFilter !== "all" || cityFilter !== "all" || urgencyFilter !== "all";
+  const hasActiveFilters = cityFilter !== "all" || urgencyFilter !== "all";
   
   const clearFilters = () => {
-    setBloodTypeFilter("all");
     setCityFilter("all");
     setUrgencyFilter("all");
   };
 
-  const activeFiltersCount = [bloodTypeFilter, cityFilter, urgencyFilter].filter(f => f !== "all").length;
+  const activeFiltersCount = [cityFilter, urgencyFilter].filter(f => f !== "all").length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -132,6 +154,62 @@ export default function PublicRequests() {
 
       <main className="pb-8 pt-4">
         <div className="max-w-lg mx-auto px-4">
+          
+          {/* Compatible/All Toggle */}
+          {isAuthenticated && userBloodType && (
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setShowCompatibleOnly(true)}
+                className={cn(
+                  "flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all",
+                  showCompatibleOnly
+                    ? "bg-primary text-primary-foreground shadow-card"
+                    : "bg-card text-muted-foreground border border-border"
+                )}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Heart className="w-4 h-4" />
+                  <span>متوافقة مع {userBloodType}</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setShowCompatibleOnly(false)}
+                className={cn(
+                  "flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all",
+                  !showCompatibleOnly
+                    ? "bg-primary text-primary-foreground shadow-card"
+                    : "bg-card text-muted-foreground border border-border"
+                )}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Users className="w-4 h-4" />
+                  <span>جميع الطلبات</span>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* Create Request CTA - Prominent Center Button */}
+          <button
+            onClick={handleCreateRequest}
+            className={cn(
+              "w-full flex items-center justify-center gap-3",
+              "bg-gradient-to-r from-red-600 to-red-500",
+              "text-white rounded-2xl p-5 mb-6",
+              "shadow-lg hover:shadow-xl",
+              "transition-all duration-300 transform hover:scale-[1.02]",
+              "ios-spring ios-press"
+            )}
+          >
+            <div className="bg-white/20 rounded-full p-2">
+              <Plus className="w-6 h-6" />
+            </div>
+            <div className="text-right">
+              <span className="text-lg font-bold block">نشر إعلان طلب تبرع</span>
+              <span className="text-sm text-white/80">أنشئ طلب دم جديد</span>
+            </div>
+          </button>
+
           {/* Filter Toggle Button */}
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -159,22 +237,6 @@ export default function PublicRequests() {
           {/* Filters Panel */}
           {showFilters && (
             <div className="bg-card rounded-xl p-4 shadow-card mb-4 space-y-4 animate-slide-up">
-              {/* Blood Type Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">فصيلة الدم</label>
-                <Select value={bloodTypeFilter} onValueChange={setBloodTypeFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="جميع الفصائل" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">جميع الفصائل</SelectItem>
-                    {BLOOD_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* City Filter */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">المحافظة</label>
@@ -224,12 +286,6 @@ export default function PublicRequests() {
           {/* Active Filters Tags */}
           {hasActiveFilters && !showFilters && (
             <div className="flex flex-wrap gap-2 mb-4">
-              {bloodTypeFilter !== "all" && (
-                <Badge variant="secondary" className="gap-1">
-                  {bloodTypeFilter}
-                  <X className="w-3 h-3 cursor-pointer" onClick={() => setBloodTypeFilter("all")} />
-                </Badge>
-              )}
               {cityFilter !== "all" && (
                 <Badge variant="secondary" className="gap-1">
                   {cityFilter}
@@ -245,25 +301,10 @@ export default function PublicRequests() {
             </div>
           )}
 
-          {/* Info banner */}
-          <div className="bg-primary-soft rounded-xl p-4 mb-6 animate-slide-up">
-            <div className="flex items-start gap-3">
-              <Heart className="w-5 h-5 text-primary mt-0.5" />
-              <div>
-                <p className="text-sm text-foreground font-medium mb-1">
-                  هل تريد المساعدة؟
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  سجّل حسابك للتواصل مع أصحاب الطلبات والتبرع بالدم
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* Results count */}
           {!isLoading && requests && (
             <p className="text-sm text-muted-foreground mb-4">
-              {requests.length} طلب {hasActiveFilters ? "مطابق" : "متاح"}
+              {requests.length} طلب {showCompatibleOnly && userBloodType ? "متوافق" : "متاح"}
             </p>
           )}
 
@@ -348,37 +389,27 @@ export default function PublicRequests() {
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Droplets className="w-12 h-12 text-muted-foreground mb-4" />
               <p className="text-muted-foreground">
-                {hasActiveFilters ? "لا توجد طلبات مطابقة للفلاتر" : "لا توجد طلبات حاليًا"}
+                {showCompatibleOnly && userBloodType 
+                  ? "لا توجد طلبات متوافقة مع فصيلتك حالياً" 
+                  : hasActiveFilters 
+                    ? "لا توجد طلبات مطابقة للفلاتر" 
+                    : "لا توجد طلبات حاليًا"
+                }
               </p>
-              {hasActiveFilters && (
+              {(hasActiveFilters || (showCompatibleOnly && userBloodType)) && (
                 <Button
                   variant="link"
                   className="mt-2"
-                  onClick={clearFilters}
+                  onClick={() => {
+                    clearFilters();
+                    setShowCompatibleOnly(false);
+                  }}
                 >
-                  مسح الفلاتر
+                  عرض جميع الطلبات
                 </Button>
               )}
             </div>
           )}
-
-          {/* CTA Button */}
-          <div className="mt-8 animate-slide-up" style={{ animationDelay: "300ms" }}>
-            <button
-              onClick={handleRespond}
-              className={cn(
-                "w-full flex items-center justify-center gap-2",
-                "bg-primary text-primary-foreground",
-                "rounded-xl px-6 py-4",
-                "font-semibold text-base",
-                "shadow-card hover:shadow-elevated",
-                "transition-all duration-200 ios-spring ios-press"
-              )}
-            >
-              <Heart className="w-5 h-5" fill="currentColor" />
-              <span>{isAuthenticated ? "الذهاب للتبرع" : "سجّل للتبرع"}</span>
-            </button>
-          </div>
         </div>
       </main>
     </div>
