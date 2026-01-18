@@ -18,6 +18,11 @@ export interface AppSettings {
   notification_periodic_text: string;
   notification_periodic_hours: number;
   notification_channels: "in_app" | "whatsapp" | "both";
+  // Archive settings per urgency
+  archive_days_urgent: number;
+  archive_days_high: number;
+  archive_days_normal: number;
+  auto_archive_enabled: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -36,6 +41,10 @@ const DEFAULT_SETTINGS: AppSettings = {
   notification_periodic_text: "هناك {count} طلبات تبرع بالدم تنتظر مساعدتك في {city}. كن بطلاً اليوم! 💪",
   notification_periodic_hours: 24,
   notification_channels: "in_app",
+  archive_days_urgent: 3,
+  archive_days_high: 5,
+  archive_days_normal: 7,
+  auto_archive_enabled: true,
 };
 
 export function useAppSettings() {
@@ -99,6 +108,18 @@ export function useAppSettings() {
             break;
           case "notification_channels":
             settings.notification_channels = item.value as "in_app" | "whatsapp" | "both";
+            break;
+          case "archive_days_urgent":
+            settings.archive_days_urgent = parseInt(item.value) || 3;
+            break;
+          case "archive_days_high":
+            settings.archive_days_high = parseInt(item.value) || 5;
+            break;
+          case "archive_days_normal":
+            settings.archive_days_normal = parseInt(item.value) || 7;
+            break;
+          case "auto_archive_enabled":
+            settings.auto_archive_enabled = item.value === "true";
             break;
         }
       });
