@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight, MapPin, Droplets, Clock, AlertCircle, Heart, Filter, X, Plus, Users } from "lucide-react";
+import { ChevronRight, MapPin, Droplets, Clock, AlertCircle, Heart, Filter, X, Plus, Users, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -17,6 +17,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { format } from "date-fns";
 
 interface BloodRequest {
   id: string;
@@ -27,6 +35,7 @@ interface BloodRequest {
   urgency_level: string;
   patient_name: string | null;
   file_number: string | null;
+  notes: string | null;
   created_at: string;
 }
 
@@ -52,6 +61,18 @@ const COMPATIBLE_DONORS: Record<BloodType, BloodType[]> = {
   "O-": ["O-"],
 };
 
+const urgencyColors: Record<string, string> = {
+  normal: "bg-muted text-muted-foreground",
+  high: "bg-warning/10 text-warning border-warning/20",
+  urgent: "bg-destructive/10 text-destructive border-destructive/20",
+};
+
+const urgencyLabels: Record<string, string> = {
+  normal: "عادي",
+  high: "مستعجل",
+  urgent: "طارئ",
+};
+
 export default function PublicRequests() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -61,6 +82,7 @@ export default function PublicRequests() {
   const [cityFilter, setCityFilter] = useState<string>("all");
   const [urgencyFilter, setUrgencyFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<BloodRequest | null>(null);
 
   const userBloodType = profile?.blood_type;
 
@@ -69,7 +91,7 @@ export default function PublicRequests() {
     queryFn: async (): Promise<BloodRequest[]> => {
       let query = supabase
         .from("blood_requests")
-        .select("id, blood_type, city, hospital_name, units_needed, urgency_level, patient_name, file_number, created_at")
+        .select("id, blood_type, city, hospital_name, units_needed, urgency_level, patient_name, file_number, notes, created_at")
         .eq("status", "open")
         .order("created_at", { ascending: false })
         .limit(50);
@@ -137,7 +159,7 @@ export default function PublicRequests() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-navBar/80 backdrop-blur-xl border-b border-border safe-area-top">
+      <header className="sticky top-0 z-40 glass border-b border-glass-border safe-area-top">
         <div className="flex items-center h-14 px-4 max-w-lg mx-auto">
           <button
             onClick={() => navigate("/")}
@@ -146,13 +168,13 @@ export default function PublicRequests() {
             <ChevronRight className="w-5 h-5" />
             <span className="text-sm font-medium">رجوع</span>
           </button>
-          <h1 className="flex-1 text-center text-lg font-semibold text-navBar-title pr-12">
+          <h1 className="flex-1 text-center text-lg font-semibold text-foreground pr-12">
             طلبات الدم
           </h1>
         </div>
       </header>
 
-      <main className="pb-8 pt-4">
+      <main className="pb-24 pt-4">
         <div className="max-w-lg mx-auto px-4">
           
           {/* Compatible/All Toggle */}
@@ -163,8 +185,8 @@ export default function PublicRequests() {
                 className={cn(
                   "flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all",
                   showCompatibleOnly
-                    ? "bg-primary text-primary-foreground shadow-card"
-                    : "bg-card text-muted-foreground border border-border"
+                    ? "glass-strong text-primary shadow-glass"
+                    : "glass text-muted-foreground"
                 )}
               >
                 <div className="flex items-center justify-center gap-2">
@@ -177,8 +199,8 @@ export default function PublicRequests() {
                 className={cn(
                   "flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all",
                   !showCompatibleOnly
-                    ? "bg-primary text-primary-foreground shadow-card"
-                    : "bg-card text-muted-foreground border border-border"
+                    ? "glass-strong text-primary shadow-glass"
+                    : "glass text-muted-foreground"
                 )}
               >
                 <div className="flex items-center justify-center gap-2">
@@ -189,33 +211,12 @@ export default function PublicRequests() {
             </div>
           )}
 
-          {/* Create Request CTA - Prominent Center Button */}
-          <button
-            onClick={handleCreateRequest}
-            className={cn(
-              "w-full flex items-center justify-center gap-3",
-              "bg-gradient-to-r from-red-600 to-red-500",
-              "text-white rounded-2xl p-5 mb-6",
-              "shadow-lg hover:shadow-xl",
-              "transition-all duration-300 transform hover:scale-[1.02]",
-              "ios-spring ios-press"
-            )}
-          >
-            <div className="bg-white/20 rounded-full p-2">
-              <Plus className="w-6 h-6" />
-            </div>
-            <div className="text-right">
-              <span className="text-lg font-bold block">نشر إعلان طلب تبرع</span>
-              <span className="text-sm text-white/80">أنشئ طلب دم جديد</span>
-            </div>
-          </button>
-
           {/* Filter Toggle Button */}
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
               "w-full flex items-center justify-between",
-              "bg-card rounded-xl p-4 shadow-card mb-4",
+              "glass-card rounded-xl p-4 mb-4",
               "transition-all duration-200 ios-spring ios-press"
             )}
           >
@@ -235,65 +236,74 @@ export default function PublicRequests() {
           </button>
 
           {/* Filters Panel */}
-          {showFilters && (
-            <div className="bg-card rounded-xl p-4 shadow-card mb-4 space-y-4 animate-slide-up">
-              {/* City Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">المحافظة</label>
-                <Select value={cityFilter} onValueChange={setCityFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="جميع المحافظات" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">جميع المحافظات</SelectItem>
-                    {CITIES.map((city) => (
-                      <SelectItem key={city} value={city}>{city}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="glass-card rounded-xl p-4 mb-4 space-y-4">
+                  {/* City Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">المحافظة</label>
+                    <Select value={cityFilter} onValueChange={setCityFilter}>
+                      <SelectTrigger className="glass">
+                        <SelectValue placeholder="جميع المحافظات" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">جميع المحافظات</SelectItem>
+                        {CITIES.map((city) => (
+                          <SelectItem key={city} value={city}>{city}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {/* Urgency Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">مستوى الاستعجال</label>
-                <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="جميع المستويات" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">جميع المستويات</SelectItem>
-                    {URGENCY_LEVELS.map((level) => (
-                      <SelectItem key={level.value} value={level.value}>{level.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  {/* Urgency Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">مستوى الاستعجال</label>
+                    <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
+                      <SelectTrigger className="glass">
+                        <SelectValue placeholder="جميع المستويات" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">جميع المستويات</SelectItem>
+                        {URGENCY_LEVELS.map((level) => (
+                          <SelectItem key={level.value} value={level.value}>{level.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {/* Clear Filters */}
-              {hasActiveFilters && (
-                <Button
-                  variant="outline"
-                  className="w-full gap-2"
-                  onClick={clearFilters}
-                >
-                  <X className="w-4 h-4" />
-                  مسح الفلاتر
-                </Button>
-              )}
-            </div>
-          )}
+                  {/* Clear Filters */}
+                  {hasActiveFilters && (
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2 glass"
+                      onClick={clearFilters}
+                    >
+                      <X className="w-4 h-4" />
+                      مسح الفلاتر
+                    </Button>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Active Filters Tags */}
           {hasActiveFilters && !showFilters && (
             <div className="flex flex-wrap gap-2 mb-4">
               {cityFilter !== "all" && (
-                <Badge variant="secondary" className="gap-1">
+                <Badge variant="secondary" className="gap-1 glass">
                   {cityFilter}
                   <X className="w-3 h-3 cursor-pointer" onClick={() => setCityFilter("all")} />
                 </Badge>
               )}
               {urgencyFilter !== "all" && (
-                <Badge variant="secondary" className="gap-1">
+                <Badge variant="secondary" className="gap-1 glass">
                   {URGENCY_LEVELS.find(l => l.value === urgencyFilter)?.label}
                   <X className="w-3 h-3 cursor-pointer" onClick={() => setUrgencyFilter("all")} />
                 </Badge>
@@ -312,7 +322,7 @@ export default function PublicRequests() {
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-card rounded-xl p-4 shadow-card animate-pulse-soft">
+                <div key={i} className="glass-card rounded-xl p-4 animate-pulse-soft">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-12 h-12 bg-muted rounded-xl" />
                     <div className="flex-1 space-y-2">
@@ -331,10 +341,13 @@ export default function PublicRequests() {
           ) : requests && requests.length > 0 ? (
             <div className="space-y-3">
               {requests.map((request, index) => (
-                <div
+                <motion.div
                   key={request.id}
-                  className="bg-card rounded-xl p-4 shadow-card animate-slide-up card-interactive"
-                  style={{ animationDelay: `${index * 50}ms` }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => setSelectedRequest(request)}
+                  className="glass-card rounded-xl p-4 cursor-pointer active:scale-[0.98] transition-transform"
                 >
                   <div className="flex items-start gap-3">
                     {/* Blood type badge */}
@@ -381,8 +394,11 @@ export default function PublicRequests() {
                         </span>
                       </div>
                     </div>
+
+                    {/* Arrow indicator */}
+                    <ChevronLeft className="w-5 h-5 text-muted-foreground self-center" />
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           ) : (
@@ -412,6 +428,99 @@ export default function PublicRequests() {
           )}
         </div>
       </main>
+
+      {/* Floating Create Request Button - Small Square */}
+      <motion.button
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={handleCreateRequest}
+        className={cn(
+          "fixed bottom-6 left-1/2 -translate-x-1/2 z-50",
+          "w-14 h-14 rounded-2xl",
+          "bg-gradient-to-br from-destructive to-destructive/80",
+          "text-white shadow-lg",
+          "flex items-center justify-center",
+          "glow-primary"
+        )}
+      >
+        <Plus className="w-6 h-6" strokeWidth={2.5} />
+      </motion.button>
+
+      {/* Request Details Dialog */}
+      <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
+        <DialogContent className="max-w-md glass-strong" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-center">تفاصيل الطلب</DialogTitle>
+          </DialogHeader>
+
+          {selectedRequest && (
+            <div className="space-y-6 py-4">
+              {/* Blood Type Header */}
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex items-center justify-center w-20 h-20 rounded-full bg-destructive/10">
+                  <Droplets className="w-10 h-10 text-destructive" />
+                </div>
+                <div className="text-center">
+                  <span className="text-3xl font-bold text-foreground">
+                    {selectedRequest.blood_type}
+                  </span>
+                  <p className="text-lg text-muted-foreground">
+                    {selectedRequest.units_needed} وحدة مطلوبة
+                  </p>
+                </div>
+                <Badge className={cn("text-sm px-3 py-1", urgencyColors[selectedRequest.urgency_level || "normal"])}>
+                  {urgencyLabels[selectedRequest.urgency_level || "normal"]}
+                </Badge>
+              </div>
+
+              {/* Details Grid */}
+              <div className="space-y-3 glass rounded-xl p-4">
+                {selectedRequest.patient_name && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="text-muted-foreground">اسم المريض:</span>
+                    <span className="font-medium text-foreground">{selectedRequest.patient_name}</span>
+                  </div>
+                )}
+
+                {selectedRequest.file_number && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="text-muted-foreground">رقم الملف:</span>
+                    <span className="font-medium text-foreground">{selectedRequest.file_number}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-muted-foreground">المستشفى:</span>
+                  <span className="font-medium text-foreground">{selectedRequest.hospital_name}</span>
+                </div>
+
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-muted-foreground">المدينة:</span>
+                  <span className="font-medium text-foreground">{selectedRequest.city}</span>
+                </div>
+
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-muted-foreground">تاريخ الإنشاء:</span>
+                  <span className="font-medium text-foreground">
+                    {format(new Date(selectedRequest.created_at), "d MMMM yyyy - h:mm a", { locale: ar })}
+                  </span>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {selectedRequest.notes && (
+                <div className="space-y-2">
+                  <h4 className="font-medium text-foreground">ملاحظات</h4>
+                  <p className="text-sm text-muted-foreground glass rounded-lg p-3">
+                    {selectedRequest.notes}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
