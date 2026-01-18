@@ -18,18 +18,40 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, CheckCircle, XCircle, Clock, Trash2, Loader2, FileText, MapPin, Droplet, Building2, AlertTriangle, MousePointer, MessageCircle, Send, Users } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MoreHorizontal, CheckCircle, XCircle, Clock, Trash2, Loader2, FileText, MapPin, Droplet, Building2, AlertTriangle, MousePointer, MessageCircle, Send, Users, Filter, X } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 import type { Database } from "@/integrations/supabase/types";
 
 type BloodType = Database["public"]["Enums"]["blood_type"];
+
+const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const CITIES = ["مدينة الكويت", "حولي", "الفروانية", "الأحمدي", "الجهراء", "مبارك الكبير"];
+const STATUSES = [
+  { value: "open", label: "مفتوح" },
+  { value: "fulfilled", label: "مكتمل" },
+  { value: "cancelled", label: "ملغي" },
+  { value: "expired", label: "منتهي" },
+];
+const URGENCY_LEVELS = [
+  { value: "normal", label: "عادي" },
+  { value: "high", label: "مستعجل" },
+  { value: "urgent", label: "طارئ" },
+];
 
 // Blood type compatibility map - who can donate to whom
 const CAN_RECEIVE_FROM: Record<BloodType, BloodType[]> = {
@@ -52,6 +74,31 @@ export default function AdminRequests() {
   const [matchingCount, setMatchingCount] = useState(0);
   const [isSending, setIsSending] = useState(false);
   const [isLoadingMatching, setIsLoadingMatching] = useState(false);
+
+  // Filters
+  const [bloodTypeFilter, setBloodTypeFilter] = useState<string>("all");
+  const [cityFilter, setCityFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [urgencyFilter, setUrgencyFilter] = useState<string>("all");
+
+  const filteredRequests = useMemo(() => {
+    return requests.filter((request) => {
+      if (bloodTypeFilter !== "all" && request.blood_type !== bloodTypeFilter) return false;
+      if (cityFilter !== "all" && request.city !== cityFilter) return false;
+      if (statusFilter !== "all" && request.status !== statusFilter) return false;
+      if (urgencyFilter !== "all" && request.urgency_level !== urgencyFilter) return false;
+      return true;
+    });
+  }, [requests, bloodTypeFilter, cityFilter, statusFilter, urgencyFilter]);
+
+  const hasActiveFilters = bloodTypeFilter !== "all" || cityFilter !== "all" || statusFilter !== "all" || urgencyFilter !== "all";
+
+  const clearFilters = () => {
+    setBloodTypeFilter("all");
+    setCityFilter("all");
+    setStatusFilter("all");
+    setUrgencyFilter("all");
+  };
 
   const statusLabels: Record<string, string> = {
     open: "مفتوح",
@@ -157,6 +204,86 @@ export default function AdminRequests() {
 
   return (
     <AdminLayout title="إدارة طلبات الدم">
+      {/* Filters */}
+      <div className="glass-card rounded-2xl p-4 mb-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Filter className="w-4 h-4 text-primary" />
+          <span className="font-medium text-sm">فلترة الطلبات</span>
+          {hasActiveFilters && (
+            <Badge className="bg-primary/10 text-primary text-xs">
+              {[bloodTypeFilter, cityFilter, statusFilter, urgencyFilter].filter(f => f !== "all").length} فلتر
+            </Badge>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Select value={bloodTypeFilter} onValueChange={setBloodTypeFilter}>
+            <SelectTrigger className="glass text-sm h-9">
+              <SelectValue placeholder="فصيلة الدم" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">جميع الفصائل</SelectItem>
+              {BLOOD_TYPES.map((type) => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={cityFilter} onValueChange={setCityFilter}>
+            <SelectTrigger className="glass text-sm h-9">
+              <SelectValue placeholder="المدينة" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">جميع المدن</SelectItem>
+              {CITIES.map((city) => (
+                <SelectItem key={city} value={city}>{city}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="glass text-sm h-9">
+              <SelectValue placeholder="الحالة" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">جميع الحالات</SelectItem>
+              {STATUSES.map((s) => (
+                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
+            <SelectTrigger className="glass text-sm h-9">
+              <SelectValue placeholder="الاستعجال" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">جميع المستويات</SelectItem>
+              {URGENCY_LEVELS.map((l) => (
+                <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 w-full gap-2 text-muted-foreground"
+            onClick={clearFilters}
+          >
+            <X className="w-3 h-3" />
+            مسح الفلاتر
+          </Button>
+        )}
+      </div>
+
+      {/* Results count */}
+      {!isLoading && (
+        <p className="text-sm text-muted-foreground mb-3">
+          {filteredRequests.length} طلب {hasActiveFilters ? "(مفلتر)" : ""}
+        </p>
+      )}
+
       <div className="space-y-3">
         {isLoading ? (
           Array(5).fill(0).map((_, i) => (
@@ -170,13 +297,13 @@ export default function AdminRequests() {
               </div>
             </div>
           ))
-        ) : requests.length === 0 ? (
+        ) : filteredRequests.length === 0 ? (
           <div className="glass-card rounded-2xl p-8 text-center">
             <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3" strokeWidth={1.5} />
-            <p className="text-muted-foreground">لا يوجد طلبات</p>
+            <p className="text-muted-foreground">{hasActiveFilters ? "لا يوجد طلبات مطابقة للفلتر" : "لا يوجد طلبات"}</p>
           </div>
         ) : (
-          requests.map((request, index) => (
+          filteredRequests.map((request, index) => (
             <motion.div
               key={request.id}
               initial={{ opacity: 0, y: 10 }}
