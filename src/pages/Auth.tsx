@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Droplet, Mail, Lock, User, MapPin, ChevronLeft, Phone, Heart, Users, Bell, Check, ExternalLink, AlertCircle } from "lucide-react";
+import { Droplet, Mail, Lock, User, MapPin, ChevronLeft, Phone, Check, ExternalLink, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -12,11 +12,6 @@ type AuthMode = "login" | "signup";
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] as const;
 const CITIES = ["مدينة الكويت", "حولي", "الفروانية", "الجهراء", "الأحمدي", "مبارك الكبير"] as const;
 
-const features = [
-  { icon: Heart, title: "أنقذ حياة", desc: "تبرعك ينقذ أرواح" },
-  { icon: Users, title: "مجتمع متعاون", desc: "آلاف المتبرعين" },
-  { icon: Bell, title: "إشعارات فورية", desc: "عند الحاجة الملحة" },
-];
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -154,9 +149,7 @@ export default function Auth() {
   };
 
   const nextStep = async () => {
-    if (step === 0) {
-      setStep(1);
-    } else if (step === 1) {
+    if (step === 1) {
       if (!fullName || !phone || !email || !password) {
         toast.error("يرجى ملء جميع الحقول");
         return;
@@ -366,103 +359,13 @@ export default function Auth() {
 
       {/* Back button */}
       <button
-        onClick={() => step > 0 ? setStep(step - 1) : navigate("/requests")}
+        onClick={() => step > 1 ? setStep(step - 1) : navigate("/")}
         className="absolute top-4 left-4 p-2.5 glass rounded-xl text-muted-foreground hover:text-foreground transition-colors z-10"
       >
         <ChevronLeft className="w-5 h-5 rotate-180" strokeWidth={2.5} />
       </button>
 
       <AnimatePresence mode="wait">
-        {/* Welcome Step */}
-        {step === 0 && (
-          <motion.div
-            key="welcome"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-            className="flex-1 flex flex-col px-6 pt-16 pb-8"
-          >
-            {/* Logo */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.1, duration: 0.5, type: "spring" }}
-              className="flex items-center justify-center w-28 h-28 glass-card rounded-[32px] mx-auto mb-6 glow-primary"
-            >
-              <Droplet className="w-14 h-14 text-primary" fill="currentColor" strokeWidth={1.5} />
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-4xl font-extrabold text-center gradient-text mb-2"
-            >
-              نبضة دم
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="text-muted-foreground text-center mb-10"
-            >
-              انضم لمجتمع المتبرعين
-            </motion.p>
-
-            {/* Features */}
-            <div className="space-y-3 mb-auto">
-              {features.map((feature, i) => (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + i * 0.1 }}
-                  className="flex items-center gap-4 glass-card rounded-2xl p-4"
-                >
-                  <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-2xl">
-                    <feature.icon className="w-6 h-6 text-primary" strokeWidth={1.5} />
-                  </div>
-                  <div className="text-right">
-                    <h3 className="font-bold text-foreground">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground">{feature.desc}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="space-y-3 mt-8"
-            >
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={nextStep}
-                className="w-full bg-gradient-to-r from-primary to-primary/85 text-primary-foreground rounded-2xl py-4 font-bold text-[17px] shadow-lg glow-primary ios-spring"
-              >
-                سجّل حساب جديد
-              </motion.button>
-
-              <button
-                onClick={() => setMode("login")}
-                className="w-full text-primary font-semibold py-3"
-              >
-                لديك حساب؟ تسجيل الدخول
-              </button>
-
-              <button
-                onClick={() => navigate("/requests")}
-                className="w-full text-muted-foreground text-sm py-2"
-              >
-                تصفح بدون تسجيل
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
 
         {/* Personal Info Step */}
         {step === 1 && (
