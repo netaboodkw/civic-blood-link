@@ -167,14 +167,19 @@ export function usePushNotifications() {
 
   // Listen for auth state changes to save token when user logs in
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         const storedToken = localStorage.getItem(PUSH_TOKEN_KEY);
-        if (storedToken) {
+        const alreadySaved = localStorage.getItem(PUSH_TOKEN_SAVED_KEY);
+        
+        // Only save if token exists and hasn't been saved yet
+        if (storedToken && !alreadySaved) {
           console.log('User signed in, saving stored push token...');
-          setTimeout(() => {
-            savePushToken(storedToken);
-          }, 0);
+          const saved = await savePushToken(storedToken);
+          if (saved) {
+            localStorage.setItem(PUSH_TOKEN_SAVED_KEY, 'true');
+            // Don't show toast here - user already knows they enabled notifications
+          }
         }
       }
     });
