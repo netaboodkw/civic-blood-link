@@ -81,10 +81,16 @@ export default function Landing() {
 
   return (
     <div 
-      className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 overflow-x-hidden overflow-y-auto" 
+      className="fixed inset-0 flex flex-col bg-gradient-to-b from-background via-background to-primary/5" 
       dir="rtl"
-      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
+      <div 
+        className="flex-1 overflow-y-auto overflow-x-hidden overscroll-none"
+        style={{ 
+          paddingTop: 'env(safe-area-inset-top)', 
+          paddingBottom: 'env(safe-area-inset-bottom)' 
+        }}
+      >
       {/* Animated Background Elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <motion.div
@@ -385,6 +391,7 @@ export default function Landing() {
           </GlassCard>
         </motion.div>
       </section>
+      </div>
     </div>
   );
 }
