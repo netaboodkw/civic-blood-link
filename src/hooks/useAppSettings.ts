@@ -9,6 +9,15 @@ export interface AppSettings {
   whatsapp_urgency_filter: "all" | "high" | "urgent";
   whatsapp_blood_type_filter: "all" | "rare";
   app_logo_url: string;
+  // Notification settings
+  notification_eligibility_end_enabled: boolean;
+  notification_eligibility_end_text: string;
+  notification_emergency_enabled: boolean;
+  notification_emergency_text: string;
+  notification_periodic_enabled: boolean;
+  notification_periodic_text: string;
+  notification_periodic_hours: number;
+  notification_channels: "in_app" | "whatsapp" | "both";
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -19,6 +28,14 @@ const DEFAULT_SETTINGS: AppSettings = {
   whatsapp_urgency_filter: "all",
   whatsapp_blood_type_filter: "all",
   app_logo_url: "",
+  notification_eligibility_end_enabled: true,
+  notification_eligibility_end_text: "أهلاً {name}! لقد انتهت فترة الانتظار ويمكنك التبرع بالدم الآن. تبرعك ينقذ حياة! 💉❤️",
+  notification_emergency_enabled: true,
+  notification_emergency_text: "حالة طارئة! يوجد طلب عاجل لفصيلة {blood_type} في {city}. ساعد في إنقاذ حياة! 🚨",
+  notification_periodic_enabled: false,
+  notification_periodic_text: "هناك {count} طلبات تبرع بالدم تنتظر مساعدتك في {city}. كن بطلاً اليوم! 💪",
+  notification_periodic_hours: 24,
+  notification_channels: "in_app",
 };
 
 export function useAppSettings() {
@@ -59,6 +76,30 @@ export function useAppSettings() {
           case "app_logo_url":
             settings.app_logo_url = item.value || "";
             break;
+          case "notification_eligibility_end_enabled":
+            settings.notification_eligibility_end_enabled = item.value === "true";
+            break;
+          case "notification_eligibility_end_text":
+            settings.notification_eligibility_end_text = item.value || DEFAULT_SETTINGS.notification_eligibility_end_text;
+            break;
+          case "notification_emergency_enabled":
+            settings.notification_emergency_enabled = item.value === "true";
+            break;
+          case "notification_emergency_text":
+            settings.notification_emergency_text = item.value || DEFAULT_SETTINGS.notification_emergency_text;
+            break;
+          case "notification_periodic_enabled":
+            settings.notification_periodic_enabled = item.value === "true";
+            break;
+          case "notification_periodic_text":
+            settings.notification_periodic_text = item.value || DEFAULT_SETTINGS.notification_periodic_text;
+            break;
+          case "notification_periodic_hours":
+            settings.notification_periodic_hours = parseInt(item.value) || 24;
+            break;
+          case "notification_channels":
+            settings.notification_channels = item.value as "in_app" | "whatsapp" | "both";
+            break;
         }
       });
 
@@ -73,12 +114,23 @@ export function useUpdateAppSetting() {
 
   return useMutation({
     mutationFn: async ({ key, value }: { key: string; value: string }) => {
-      const { error } = await supabase
+      // Try update first, if no rows affected then insert
+      const { error: updateError, data: updateData } = await supabase
         .from("app_settings")
-        .update({ value })
-        .eq("key", key);
+        .update({ value, updated_at: new Date().toISOString() })
+        .eq("key", key)
+        .select();
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+      
+      // If no rows updated, insert
+      if (!updateData || updateData.length === 0) {
+        const { error: insertError } = await supabase
+          .from("app_settings")
+          .insert({ key, value });
+        
+        if (insertError) throw insertError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["app-settings"] });

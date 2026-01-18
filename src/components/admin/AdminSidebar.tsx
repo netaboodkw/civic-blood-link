@@ -5,7 +5,8 @@ import {
   Droplet, 
   Settings,
   LogOut,
-  Home
+  Home,
+  Bell
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useNavigate } from "react-router-dom";
@@ -30,6 +31,7 @@ const menuItems = [
   { title: "المستخدمين", url: "/admin/users", icon: Users },
   { title: "طلبات الدم", url: "/admin/requests", icon: FileText },
   { title: "سجل التبرعات", url: "/admin/donations", icon: Droplet },
+  { title: "الإشعارات", url: "/admin/notifications", icon: Bell },
   { title: "الإعدادات", url: "/admin/settings", icon: Settings },
 ];
 
