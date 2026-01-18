@@ -207,11 +207,12 @@ export default function Auth() {
   // Login View
   if (mode === "login") {
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/30" dir="rtl">
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/30" dir="rtl" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         {/* Back button */}
         <button
           onClick={() => navigate("/")}
-          className="absolute top-4 left-4 p-2.5 glass rounded-xl text-muted-foreground hover:text-foreground transition-colors z-10"
+          className="absolute left-4 p-2.5 glass rounded-xl text-muted-foreground hover:text-foreground transition-colors z-10"
+          style={{ top: 'calc(env(safe-area-inset-top) + 1rem)' }}
         >
           <ChevronLeft className="w-5 h-5 rotate-180" strokeWidth={2.5} />
         </button>
@@ -336,10 +337,10 @@ export default function Auth() {
 
   // Signup View - Multi-step
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/30" dir="rtl">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/30" dir="rtl" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       {/* Progress bar */}
       {step > 0 && (
-        <div className="px-6 pt-4 safe-area-top">
+        <div className="px-6 pt-4">
           <div className="flex gap-2">
             {[1, 2, 3].map((i) => (
               <motion.div
@@ -360,7 +361,8 @@ export default function Auth() {
       {/* Back button */}
       <button
         onClick={() => step > 1 ? setStep(step - 1) : navigate("/")}
-        className="absolute top-4 left-4 p-2.5 glass rounded-xl text-muted-foreground hover:text-foreground transition-colors z-10"
+        className="absolute left-4 p-2.5 glass rounded-xl text-muted-foreground hover:text-foreground transition-colors z-10"
+        style={{ top: 'calc(env(safe-area-inset-top) + 1rem)' }}
       >
         <ChevronLeft className="w-5 h-5 rotate-180" strokeWidth={2.5} />
       </button>
