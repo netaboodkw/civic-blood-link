@@ -160,14 +160,14 @@ export default function AdminRequests() {
     
     setIsSending(true);
     try {
-      // Get all matching donors
+      // Get all matching donors with push tokens
       const compatibleTypes = CAN_RECEIVE_FROM[selectedRequest.blood_type] || [];
       const ninetyDaysAgo = new Date();
       ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
       const { data: donors, error } = await supabase
         .from("profiles")
-        .select("id, full_name, phone")
+        .select("id, full_name, phone, push_token")
         .in("blood_type", compatibleTypes)
         .eq("city", selectedRequest.city)
         .or(`last_donation_date.is.null,last_donation_date.lt.${ninetyDaysAgo.toISOString()}`);
@@ -191,7 +191,45 @@ export default function AdminRequests() {
         if (notifError) throw notifError;
       }
 
-      toast.success(`تم إرسال الإشعار لـ ${donors?.length || 0} متبرع`);
+      // Send iOS push notifications to donors with push tokens
+      const donorsWithPushToken = donors?.filter(d => d.push_token) || [];
+      let pushSent = 0;
+      let pushFailed = 0;
+
+      if (donorsWithPushToken.length > 0) {
+        const title = selectedRequest.urgency_level === "urgent" 
+          ? "🚨 طلب عاجل للتبرع بالدم!" 
+          : "📢 طلب تبرع بالدم";
+        const body = `يوجد طلب للتبرع بفصيلة ${selectedRequest.blood_type} في ${selectedRequest.hospital_name}، ${selectedRequest.city}`;
+
+        const { data: pushResult, error: pushError } = await supabase.functions.invoke('send-ios-push', {
+          body: {
+            user_ids: donorsWithPushToken.map(d => d.id),
+            title,
+            body,
+          }
+        });
+
+        if (pushError) {
+          console.error('Push notification error:', pushError);
+        } else {
+          pushSent = pushResult?.sent || 0;
+          pushFailed = pushResult?.failed || 0;
+        }
+      }
+
+      const inAppCount = donors?.length || 0;
+      const pushCount = donorsWithPushToken.length;
+      
+      let message = `تم إرسال ${inAppCount} إشعار داخلي`;
+      if (pushCount > 0) {
+        message += ` + ${pushSent} إشعار iOS`;
+        if (pushFailed > 0) {
+          message += ` (${pushFailed} فشل)`;
+        }
+      }
+      
+      toast.success(message);
       setSendDialogOpen(false);
       setSelectedRequest(null);
     } catch (error) {
